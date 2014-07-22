@@ -44,6 +44,8 @@ func init() {
 		Status{},
 		ServerOpList{},
 		ServerOp{},
+		JobList{},
+		Job{},
 	)
 	AddKnownTypes("v1beta1",
 		v1beta1.PodList{},
