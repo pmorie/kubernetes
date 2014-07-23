@@ -47,6 +47,9 @@ type Interface interface {
 	CreateService(api.Service) (api.Service, error)
 	UpdateService(api.Service) (api.Service, error)
 	DeleteService(string) error
+
+	ListJobs() (api.JobList, error)
+	UpdateJob(api.Job) (api.Job, error)
 }
 
 // StatusErr might get returned from an api call if your request is still being processed
@@ -237,4 +240,16 @@ func (c *Client) UpdateService(svc api.Service) (result api.Service, err error) 
 // DeleteService deletes an existing service.
 func (c *Client) DeleteService(name string) error {
 	return c.Delete().Path("services").Path(name).Do().Error()
+}
+
+// ListJobs returns a list of jobs.
+func (c *Client) ListJobs() (result api.JobList, err error) {
+	err = c.Get().Path("jobs").Do().Into(&result)
+	return
+}
+
+// UpdateJob updates an existing job.
+func (c *Client) UpdateJob(job api.Job) (result api.Job, err error) {
+	err = c.Put().Path("jobs").Path(job.ID).Body(job).Do().Into(&result)
+	return
 }
