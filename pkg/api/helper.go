@@ -61,6 +61,10 @@ func init() {
 		v1beta1.Status{},
 		v1beta1.ServerOpList{},
 		v1beta1.ServerOp{},
+		v1beta1.JobList{},
+		v1beta1.Job{},
+		v1beta1.Build{},
+		v1beta1.BuildList{},
 	)
 }
 
@@ -438,6 +442,8 @@ func internalize(obj interface{}) (interface{}, error) {
 			CPU:           cObj.CPU,
 			VolumeMounts:  mounts,
 			LivenessProbe: liveness,
+			Privileged:    cObj.Privileged,
+			RestartPolicy: cObj.RestartPolicy,
 		}
 		return &result, nil
 	case *v1beta1.Port:
@@ -590,6 +596,66 @@ func internalize(obj interface{}) (interface{}, error) {
 	case *v1beta1.ServerOp:
 		result := ServerOp{
 			JSONBase: JSONBase(cObj.JSONBase),
+		}
+		result.APIVersion = ""
+		return &result, nil
+	case *v1beta1.JobList:
+		var items []Job
+		if cObj.Items != nil {
+			items = make([]Job, len(cObj.Items))
+			for ix := range cObj.Items {
+				iObj, err := internalize(cObj.Items[ix])
+				if err != nil {
+					return nil, err
+				}
+				items[ix] = iObj.(Job)
+			}
+		}
+		result := JobList{
+			JSONBase: JSONBase(cObj.JSONBase),
+			Items:    items,
+		}
+		result.APIVersion = ""
+		return &result, nil
+	case *v1beta1.Job:
+		pod, err := internalize(cObj.Pod)
+		if err != nil {
+			return nil, err
+		}
+		result := Job{
+			JSONBase: JSONBase(cObj.JSONBase),
+			Status:   JobStatus(cObj.Status),
+			Success:  cObj.Success,
+			Pod:      pod.(Pod),
+			PodID:    cObj.PodID,
+		}
+		result.APIVersion = ""
+		return &result, nil
+	case *v1beta1.BuildList:
+		var items []Build
+		if cObj.Items != nil {
+			items = make([]Build, len(cObj.Items))
+			for ix := range cObj.Items {
+				iObj, err := internalize(cObj.Items[ix])
+				if err != nil {
+					return nil, err
+				}
+				items[ix] = iObj.(Build)
+			}
+		}
+		result := BuildList{
+			JSONBase: JSONBase(cObj.JSONBase),
+			Items:    items,
+		}
+		result.APIVersion = ""
+		return &result, nil
+	case *v1beta1.Build:
+		result := Build{
+			JSONBase: JSONBase(cObj.JSONBase),
+			Context:  cObj.Context,
+			Status:   BuildStatus(cObj.Status),
+			Success:  cObj.Success,
+			JobID:    cObj.JobID,
 		}
 		result.APIVersion = ""
 		return &result, nil
@@ -771,6 +837,8 @@ func externalize(obj interface{}) (interface{}, error) {
 			CPU:           cObj.CPU,
 			VolumeMounts:  mounts,
 			LivenessProbe: liveness,
+			Privileged:    cObj.Privileged,
+			RestartPolicy: cObj.RestartPolicy,
 		}
 		return &result, nil
 	case *Port:
@@ -916,6 +984,66 @@ func externalize(obj interface{}) (interface{}, error) {
 	case *ServerOp:
 		result := v1beta1.ServerOp{
 			JSONBase: v1beta1.JSONBase(cObj.JSONBase),
+		}
+		result.APIVersion = "v1beta1"
+		return &result, nil
+	case *JobList:
+		var items []v1beta1.Job
+		if cObj.Items != nil {
+			items = make([]v1beta1.Job, len(cObj.Items))
+			for ix := range cObj.Items {
+				iObj, err := externalize(cObj.Items[ix])
+				if err != nil {
+					return nil, err
+				}
+				items[ix] = iObj.(v1beta1.Job)
+			}
+		}
+		result := v1beta1.JobList{
+			JSONBase: v1beta1.JSONBase(cObj.JSONBase),
+			Items:    items,
+		}
+		result.APIVersion = "v1beta1"
+		return &result, nil
+	case *Job:
+		pod, err := externalize(cObj.Pod)
+		if err != nil {
+			return nil, err
+		}
+		result := v1beta1.Job{
+			JSONBase: v1beta1.JSONBase(cObj.JSONBase),
+			Status:   v1beta1.JobStatus(cObj.Status),
+			Success:  cObj.Success,
+			Pod:      pod.(v1beta1.Pod),
+			PodID:    cObj.PodID,
+		}
+		result.APIVersion = "v1beta1"
+		return &result, nil
+	case *BuildList:
+		var items []v1beta1.Build
+		if cObj.Items != nil {
+			items = make([]v1beta1.Build, len(cObj.Items))
+			for ix := range cObj.Items {
+				iObj, err := externalize(cObj.Items[ix])
+				if err != nil {
+					return nil, err
+				}
+				items[ix] = iObj.(v1beta1.Build)
+			}
+		}
+		result := v1beta1.BuildList{
+			JSONBase: v1beta1.JSONBase(cObj.JSONBase),
+			Items:    items,
+		}
+		result.APIVersion = "v1beta1"
+		return &result, nil
+	case *Build:
+		result := v1beta1.Build{
+			JSONBase: v1beta1.JSONBase(cObj.JSONBase),
+			Context:  cObj.Context,
+			Status:   v1beta1.BuildStatus(cObj.Status),
+			Success:  cObj.Success,
+			JobID:    cObj.JobID,
 		}
 		result.APIVersion = "v1beta1"
 		return &result, nil

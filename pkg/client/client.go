@@ -49,6 +49,8 @@ type Interface interface {
 	DeleteService(string) error
 
 	ListJobs() (api.JobList, error)
+	GetJob(name string) (api.Job, error)
+	CreateJob(api.Job) (api.Job, error)
 	UpdateJob(api.Job) (api.Job, error)
 
 	ListBuilds() (api.BuildList, error)
@@ -248,6 +250,18 @@ func (c *Client) DeleteService(name string) error {
 // ListJobs returns a list of jobs.
 func (c *Client) ListJobs() (result api.JobList, err error) {
 	err = c.Get().Path("jobs").Do().Into(&result)
+	return
+}
+
+// GetJob takes the name of the job, and returns the corresponding Job object, and an error if it occurs
+func (c *Client) GetJob(name string) (result api.Job, err error) {
+	err = c.Get().Path("jobs").Path(name).Do().Into(&result)
+	return
+}
+
+// CreateJob creates a new job.
+func (c *Client) CreateJob(job api.Job) (result api.Job, err error) {
+	err = c.Post().Path("jobs").Path(job.ID).Body(job).Do().Into(&result)
 	return
 }
 
