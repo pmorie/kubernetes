@@ -50,6 +50,9 @@ type Interface interface {
 
 	ListJobs() (api.JobList, error)
 	UpdateJob(api.Job) (api.Job, error)
+
+	ListBuilds() (api.BuildList, error)
+	UpdateBuild(api.Build) (api.Build, error)
 }
 
 // StatusErr might get returned from an api call if your request is still being processed
@@ -251,5 +254,17 @@ func (c *Client) ListJobs() (result api.JobList, err error) {
 // UpdateJob updates an existing job.
 func (c *Client) UpdateJob(job api.Job) (result api.Job, err error) {
 	err = c.Put().Path("jobs").Path(job.ID).Body(job).Do().Into(&result)
+	return
+}
+
+// ListBuilds returns a list of builds.
+func (c *Client) ListBuilds() (result api.BuildList, err error) {
+	err = c.Get().Path("builds").Do().Into(&result)
+	return
+}
+
+// UpdateBuild updates an existing build.
+func (c *Client) UpdateBuild(build api.Build) (result api.Build, err error) {
+	err = c.Put().Path("builds").Path(build.ID).Body(build).Do().Into(&result)
 	return
 }
