@@ -105,6 +105,36 @@ func (client *FakeKubeClient) DeleteService(controller string) error {
 	return nil
 }
 
+func (client *FakeKubeClient) ListJobs() (api.JobList, error) {
+	client.actions = append(client.actions, Action{action: "list-jobs"})
+	return api.JobList{}, nil
+}
+
+func (client *FakeKubeClient) GetJob(name string) (api.Job, error) {
+	client.actions = append(client.actions, Action{action: "get-job", value: name})
+	return api.Job{}, nil
+}
+
+func (client *FakeKubeClient) CreateJob(job api.Job) (api.Job, error) {
+	client.actions = append(client.actions, Action{action: "create-job", value: job})
+	return api.Job{}, nil
+}
+
+func (client *FakeKubeClient) UpdateJob(job api.Job) (api.Job, error) {
+	client.actions = append(client.actions, Action{action: "update-job", value: job})
+	return api.Job{}, nil
+}
+
+func (client *FakeKubeClient) ListBuilds() (api.BuildList, error) {
+	client.actions = append(client.actions, Action{action: "list-builds"})
+	return api.BuildList{}, nil
+}
+
+func (client *FakeKubeClient) UpdateBuild(build api.Build) (api.Build, error) {
+	client.actions = append(client.actions, Action{action: "update-build", value: build})
+	return api.Build{}, nil
+}
+
 func validateAction(expectedAction, actualAction Action, t *testing.T) {
 	if expectedAction != actualAction {
 		t.Errorf("Unexpected action: %#v, expected: %#v", actualAction, expectedAction)

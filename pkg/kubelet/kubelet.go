@@ -308,10 +308,25 @@ func (kl *Kubelet) runContainer(pod *Pod, container *api.Container, podVolumes v
 func (kl *Kubelet) killContainer(dockerContainer docker.APIContainers) error {
 	glog.Infof("Killing: %s", dockerContainer.ID)
 	err := kl.dockerClient.StopContainer(dockerContainer.ID, 10)
-	err = kl.dockerClient.RemoveContainer(docker.RemoveContainerOptions{ID: dockerContainer.ID, Force: true})
 	podFullName, containerName := parseDockerName(dockerContainer.Names[0])
 	kl.LogEvent(&api.Event{
 		Event: "STOP",
+		Manifest: &api.ContainerManifest{
+			//TODO: This should be reported using either the apiserver schema or the kubelet schema
+			ID: podFullName,
+		},
+		Container: &api.Container{
+			Name: containerName,
+		},
+	})
+
+	if err != nil {
+		return err
+	}
+
+	err = kl.dockerClient.RemoveContainer(docker.RemoveContainerOptions{ID: dockerContainer.ID, Force: true})
+	kl.LogEvent(&api.Event{
+		Event: "REMOVE",
 		Manifest: &api.ContainerManifest{
 			//TODO: This should be reported using either the apiserver schema or the kubelet schema
 			ID: podFullName,

@@ -285,6 +285,14 @@ func TestSyncPodsDeletes(t *testing.T) {
 
 func TestSyncPodDeletesDuplicate(t *testing.T) {
 	kubelet, _, fakeDocker := makeTestKubelet(t)
+
+	fakeDocker.container = &docker.Container{
+		ID: "foobar",
+		State: docker.State{
+			Running: true,
+		},
+	}
+
 	dockerContainers := DockerContainers{
 		"1234": &docker.APIContainers{
 			// the k8s prefix is required for the kubelet to manage the container
@@ -318,7 +326,9 @@ func TestSyncPodDeletesDuplicate(t *testing.T) {
 		},
 	}, dockerContainers)
 	expectNoError(t, err)
-	verifyCalls(t, fakeDocker, []string{"stop"})
+	verifyCalls(t, fakeDocker, []string{"inspect", "stop"})
+
+	fmt.Println("%+v", fakeDocker.stopped)
 
 	// Expect one of the duplicates to be killed.
 	if len(fakeDocker.stopped) != 1 || (len(fakeDocker.stopped) != 0 && fakeDocker.stopped[0] != "1234" && fakeDocker.stopped[0] != "4567") {
@@ -334,7 +344,16 @@ func (f *FalseHealthChecker) HealthCheck(container api.Container) (health.Status
 
 func TestSyncPodUnhealthy(t *testing.T) {
 	kubelet, _, fakeDocker := makeTestKubelet(t)
+
 	kubelet.healthChecker = &FalseHealthChecker{}
+
+	fakeDocker.container = &docker.Container{
+		ID: "foobar",
+		State: docker.State{
+			Running: true,
+		},
+	}
+
 	dockerContainers := DockerContainers{
 		"1234": &docker.APIContainers{
 			// the k8s prefix is required for the kubelet to manage the container
@@ -363,7 +382,7 @@ func TestSyncPodUnhealthy(t *testing.T) {
 		},
 	}, dockerContainers)
 	expectNoError(t, err)
-	verifyCalls(t, fakeDocker, []string{"stop", "create", "start"})
+	verifyCalls(t, fakeDocker, []string{"inspect", "stop", "create", "start"})
 
 	// A map interation is used to delete containers, so must not depend on
 	// order here.
