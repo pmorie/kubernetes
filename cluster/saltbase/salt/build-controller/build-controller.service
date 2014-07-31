@@ -1,0 +1,11 @@
+[Unit]
+Description=Kubernetes Build Controller
+Documentation=https://github.com/GoogleCloudPlatform/kubernetes
+
+[Service]
+Type=simple
+EnvironmentFile=-/etc/sysconfig/build-controller
+ExecStart=/usr/local/bin/build-controller "$DAEMON_ARGS"
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,11 @@
+[Unit]
+Description=Kubernetes Job Controller
+Documentation=https://github.com/GoogleCloudPlatform/kubernetes
+
+[Service]
+Type=simple
+EnvironmentFile=-/etc/sysconfig/job-controller
+ExecStart=/usr/local/bin/job-controller "$DAEMON_ARGS"
+
+[Install]
+WantedBy=multi-user.target

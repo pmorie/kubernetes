@@ -1,0 +1,11 @@
+[Unit]
+Description=Kubernetes Deployment Controller
+Documentation=https://github.com/GoogleCloudPlatform/kubernetes
+
+[Service]
+Type=simple
+EnvironmentFile=-/etc/sysconfig/deployment-controller
+ExecStart=/usr/local/bin/deployment-controller "$DAEMON_ARGS"
+
+[Install]
+WantedBy=multi-user.target

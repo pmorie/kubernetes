@@ -245,6 +245,52 @@ func (registry *EtcdRegistry) DeleteController(controllerID string) error {
 	return err
 }
 
+// ListDeployments obtains a list of Deployments.
+func (registry *EtcdRegistry) ListDeployments() ([]api.Deployment, error) {
+	var deployments []api.Deployment
+	err := registry.helper().ExtractList("/registry/deployments", &deployments)
+	return deployments, err
+}
+
+func makeDeploymentKey(id string) string {
+	return "/registry/deployments/" + id
+}
+
+// GetDeployment gets a specific Deployment specified by its ID.
+func (registry *EtcdRegistry) GetDeployment(deploymentID string) (*api.Deployment, error) {
+	var deployment api.Deployment
+	key := makeDeploymentKey(deploymentID)
+	err := registry.helper().ExtractObj(key, &deployment, false)
+	if tools.IsEtcdNotFound(err) {
+		return nil, apiserver.NewNotFoundErr("replicationDeployment", deploymentID)
+	}
+	if err != nil {
+		return nil, err
+	}
+	return &deployment, nil
+}
+
+// CreateDeployment creates a new Deployment.
+func (registry *EtcdRegistry) CreateDeployment(deployment api.Deployment) error {
+	// TODO : check for existence here and error.
+	return registry.UpdateDeployment(deployment)
+}
+
+// UpdateDeployment replaces an existing Deployment.
+func (registry *EtcdRegistry) UpdateDeployment(deployment api.Deployment) error {
+	return registry.helper().SetObj(makeDeploymentKey(deployment.ID), deployment)
+}
+
+// DeleteDeployment deletes a Deployment specified by its ID.
+func (registry *EtcdRegistry) DeleteDeployment(deploymentID string) error {
+	key := makeDeploymentKey(deploymentID)
+	_, err := registry.etcdClient.Delete(key, false)
+	if tools.IsEtcdNotFound(err) {
+		return apiserver.NewNotFoundErr("replicationDeployment", deploymentID)
+	}
+	return err
+}
+
 func makeServiceKey(name string) string {
 	return "/registry/services/specs/" + name
 }

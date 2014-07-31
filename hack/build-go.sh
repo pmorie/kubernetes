@@ -1,4 +1,4 @@
-eg#!/bin/bash
+#!/bin/bash
 
 # Copyright 2014 Google Inc. All rights reserved.
 #
@@ -25,7 +25,7 @@ source $(dirname $0)/config-go.sh
 
 cd "${KUBE_TARGET}"
 
-BINARIES="cmd/proxy cmd/apiserver cmd/controller-manager cmd/build-controller cmd/job-controller cmd/kubelet cmd/kubecfg"
+BINARIES="cmd/proxy cmd/apiserver cmd/controller-manager cmd/build-controller cmd/job-controller cmd/kubelet cmd/kubecfg cmd/deployment-controller"
 
 if [ $# -gt 0 ]; then
   BINARIES="$@"

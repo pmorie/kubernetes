@@ -77,6 +77,8 @@ func TestTypes(t *testing.T) {
 		&ReplicationControllerList{},
 		&ReplicationController{},
 		&PodList{},
+		&Deployment{},
+		&DeploymentList{},
 	}
 	for _, item := range table {
 		runTest(t, item)

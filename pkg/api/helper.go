@@ -44,6 +44,8 @@ func init() {
 		Status{},
 		ServerOpList{},
 		ServerOp{},
+		DeploymentList{},
+		Deployment{},
 		JobList{},
 		Job{},
 		Build{},
@@ -61,6 +63,8 @@ func init() {
 		v1beta1.Status{},
 		v1beta1.ServerOpList{},
 		v1beta1.ServerOp{},
+		v1beta1.DeploymentList{},
+		v1beta1.Deployment{},
 		v1beta1.JobList{},
 		v1beta1.Job{},
 		v1beta1.Build{},
@@ -497,6 +501,36 @@ func internalize(obj interface{}) (interface{}, error) {
 		}
 		result.APIVersion = ""
 		return &result, nil
+	case *v1beta1.DeploymentList:
+		var items []Deployment
+		if cObj.Items != nil {
+			items = make([]Deployment, len(cObj.Items))
+			for ix := range cObj.Items {
+				rc, err := internalize(cObj.Items[ix])
+				if err != nil {
+					return nil, err
+				}
+				items[ix] = rc.(Deployment)
+			}
+		}
+		result := DeploymentList{
+			JSONBase: JSONBase(cObj.JSONBase),
+			Items:    items,
+		}
+		result.APIVersion = ""
+		return &result, nil
+	case *v1beta1.Deployment:
+		result := Deployment{
+			JSONBase:        JSONBase(cObj.JSONBase),
+			DeploymentImage: cObj.DeploymentImage,
+			Context:         cObj.Context,
+			Success:         cObj.Success,
+			Labels:          cObj.Labels,
+			Status:          DeploymentStatus(cObj.Status),
+			JobID:           cObj.JobID,
+		}
+		result.APIVersion = ""
+		return &result, nil
 	case *v1beta1.ReplicationControllerState:
 		template, err := internalize(cObj.PodTemplate)
 		if err != nil {
@@ -886,6 +920,33 @@ func externalize(obj interface{}) (interface{}, error) {
 			JSONBase:     v1beta1.JSONBase(cObj.JSONBase),
 			DesiredState: desired.(v1beta1.ReplicationControllerState),
 			Labels:       cObj.Labels,
+		}
+		result.APIVersion = "v1beta1"
+		return &result, nil
+	case *DeploymentList:
+		items := make([]v1beta1.Deployment, len(cObj.Items))
+		for ix := range cObj.Items {
+			rc, err := externalize(cObj.Items[ix])
+			if err != nil {
+				return nil, err
+			}
+			items[ix] = rc.(v1beta1.Deployment)
+		}
+		result := v1beta1.DeploymentList{
+			JSONBase: v1beta1.JSONBase(cObj.JSONBase),
+			Items:    items,
+		}
+		result.APIVersion = "v1beta1"
+		return &result, nil
+	case *Deployment:
+		result := v1beta1.Deployment{
+			JSONBase:        v1beta1.JSONBase(cObj.JSONBase),
+			DeploymentImage: cObj.DeploymentImage,
+			Context:         cObj.Context,
+			Success:         cObj.Success,
+			Labels:          cObj.Labels,
+			Status:          v1beta1.DeploymentStatus(cObj.Status),
+			JobID:           cObj.JobID,
 		}
 		result.APIVersion = "v1beta1"
 		return &result, nil

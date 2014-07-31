@@ -28,6 +28,7 @@ type MemoryRegistry struct {
 	podData        map[string]api.Pod
 	controllerData map[string]api.ReplicationController
 	serviceData    map[string]api.Service
+	deploymentData map[string]api.Deployment
 	jobData        map[string]api.Job
 	buildData      map[string]api.Build
 }
@@ -37,6 +38,7 @@ func MakeMemoryRegistry() *MemoryRegistry {
 		podData:        map[string]api.Pod{},
 		controllerData: map[string]api.ReplicationController{},
 		serviceData:    map[string]api.Service{},
+		deploymentData: map[string]api.Deployment{},
 		jobData:        map[string]api.Job{},
 		buildData:      map[string]api.Build{},
 	}
@@ -117,6 +119,44 @@ func (registry *MemoryRegistry) UpdateController(controller api.ReplicationContr
 		return apiserver.NewNotFoundErr("replicationController", controller.ID)
 	}
 	registry.controllerData[controller.ID] = controller
+	return nil
+}
+
+func (registry *MemoryRegistry) ListDeployments() ([]api.Deployment, error) {
+	result := []api.Deployment{}
+	for _, value := range registry.deploymentData {
+		result = append(result, value)
+	}
+	return result, nil
+}
+
+func (registry *MemoryRegistry) GetDeployment(deploymentID string) (*api.Deployment, error) {
+	deployment, found := registry.deploymentData[deploymentID]
+	if found {
+		return &deployment, nil
+	} else {
+		return nil, apiserver.NewNotFoundErr("replicationDeployment", deploymentID)
+	}
+}
+
+func (registry *MemoryRegistry) CreateDeployment(deployment api.Deployment) error {
+	registry.deploymentData[deployment.ID] = deployment
+	return nil
+}
+
+func (registry *MemoryRegistry) DeleteDeployment(deploymentID string) error {
+	if _, ok := registry.deploymentData[deploymentID]; !ok {
+		return apiserver.NewNotFoundErr("replicationDeployment", deploymentID)
+	}
+	delete(registry.deploymentData, deploymentID)
+	return nil
+}
+
+func (registry *MemoryRegistry) UpdateDeployment(deployment api.Deployment) error {
+	if _, ok := registry.deploymentData[deployment.ID]; !ok {
+		return apiserver.NewNotFoundErr("replicationDeployment", deployment.ID)
+	}
+	registry.deploymentData[deployment.ID] = deployment
 	return nil
 }
 

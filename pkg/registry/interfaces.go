@@ -44,6 +44,15 @@ type ControllerRegistry interface {
 	DeleteController(controllerID string) error
 }
 
+// DeploymentRegistry is an interface for things that know how to store Deployments
+type DeploymentRegistry interface {
+	ListDeployments() ([]api.Deployment, error)
+	GetDeployment(deploymentID string) (*api.Deployment, error)
+	CreateDeployment(deployment api.Deployment) error
+	UpdateDeployment(deployment api.Deployment) error
+	DeleteDeployment(deploymentID string) error
+}
+
 // ServiceRegistry is an interface for things that know how to store services.
 type ServiceRegistry interface {
 	ListServices() (api.ServiceList, error)

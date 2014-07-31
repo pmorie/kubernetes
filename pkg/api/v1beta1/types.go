@@ -413,3 +413,29 @@ type BuildList struct {
 type APIObject struct {
 	Object interface{}
 }
+
+type DeploymentStatus string
+
+const (
+	DeploymentNew      DeploymentStatus = "new"
+	DeploymentPending  DeploymentStatus = "pending"
+	DeploymentRunning  DeploymentStatus = "running"
+	DeploymentComplete DeploymentStatus = "complete"
+)
+
+// DeploymentList is a collection of replication deployments.
+type DeploymentList struct {
+	JSONBase `json:",inline" yaml:",inline"`
+	Items    []Deployment `json:"items,omitempty" yaml:"items,omitempty"`
+}
+
+// Deployment represents a deployment of a service
+type Deployment struct {
+	JSONBase        `json:",inline" yaml:",inline"`
+	DeploymentImage string            `json:"deploymentImage" yaml:"deploymentImage"`
+	Context         map[string]string `json:"context,omitempty" yaml:"context,omitempty"`
+	Success         bool              `json:"success,omitempty" yaml:"success,omitempty"`
+	Labels          map[string]string `json:"labels,omitempty" yaml:"labels,omitempty"`
+	Status          DeploymentStatus  `json:"status,omitempty" yaml:"status,omitempty"`
+	JobID           string            `json:"jobID,omitempty" yaml:"jobID,omitempty"`
+}

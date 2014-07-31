@@ -91,6 +91,7 @@ var minionColumns = []string{"Minion identifier"}
 var statusColumns = []string{"Status"}
 var jobColumns = []string{"ID", "Status", "Pod ID"}
 var buildColumns = []string{"ID", "Status", "Job ID"}
+var deploymentColumns = []string{"ID", "Status", "Job ID", "Labels"}
 
 func (h *HumanReadablePrinter) unknown(data []byte, w io.Writer) error {
 	_, err := fmt.Fprintf(w, "Unknown object: %s", string(data))
@@ -154,6 +155,20 @@ func (h *HumanReadablePrinter) printBuild(build *api.Build, w io.Writer) error {
 func (h *HumanReadablePrinter) printBuildList(buildList *api.BuildList, w io.Writer) error {
 	for _, build := range buildList.Items {
 		if err := h.printBuild(&build, w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (h *HumanReadablePrinter) printDeployment(deployment *api.Deployment, w io.Writer) error {
+	_, err := fmt.Fprintf(w, "%s\t%s\t%s\t%s\n", deployment.ID, deployment.Status, deployment.JobID, labels.Set(deployment.Labels))
+	return err
+}
+
+func (h *HumanReadablePrinter) printDeploymentList(deploymentList *api.DeploymentList, w io.Writer) error {
+	for _, deployment := range deploymentList.Items {
+		if err := h.printDeployment(&deployment, w); err != nil {
 			return err
 		}
 	}
@@ -273,6 +288,12 @@ func (h *HumanReadablePrinter) PrintObj(obj interface{}, output io.Writer) error
 	case *api.BuildList:
 		h.printHeader(buildColumns, w)
 		return h.printBuildList(o, w)
+	case *api.Deployment:
+		h.printHeader(deploymentColumns, w)
+		return h.printDeployment(o, w)
+	case *api.DeploymentList:
+		h.printHeader(deploymentColumns, w)
+		return h.printDeploymentList(o, w)
 	default:
 		_, err := fmt.Fprintf(w, "Error: unknown type %#v", obj)
 		return err

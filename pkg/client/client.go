@@ -38,10 +38,17 @@ type Interface interface {
 	CreatePod(api.Pod) (api.Pod, error)
 	UpdatePod(api.Pod) (api.Pod, error)
 
+	ListReplicationControllers(selector labels.Selector) (api.ReplicationControllerList, error)
 	GetReplicationController(name string) (api.ReplicationController, error)
 	CreateReplicationController(api.ReplicationController) (api.ReplicationController, error)
 	UpdateReplicationController(api.ReplicationController) (api.ReplicationController, error)
 	DeleteReplicationController(string) error
+
+	ListDeployments(selector labels.Selector) (api.DeploymentList, error)
+	GetDeployment(name string) (api.Deployment, error)
+	CreateDeployment(api.Deployment) (api.Deployment, error)
+	UpdateDeployment(api.Deployment) (api.Deployment, error)
+	DeleteDeployment(string) error
 
 	GetService(name string) (api.Service, error)
 	CreateService(api.Service) (api.Service, error)
@@ -201,6 +208,12 @@ func (c *Client) UpdatePod(pod api.Pod) (result api.Pod, err error) {
 	return
 }
 
+// ListReplicationControllers takes a selector, and returns the list of replication controllers that match that selector
+func (c *Client) ListReplicationControllers(selector labels.Selector) (result api.ReplicationControllerList, err error) {
+	err = c.Get().Path("replicationControllers").Selector(selector).Do().Into(&result)
+	return
+}
+
 // GetReplicationController returns information about a particular replication controller
 func (c *Client) GetReplicationController(name string) (result api.ReplicationController, err error) {
 	err = c.Get().Path("replicationControllers").Path(name).Do().Into(&result)
@@ -222,6 +235,35 @@ func (c *Client) UpdateReplicationController(controller api.ReplicationControlle
 // DeleteReplicationController deletes an existing replication controller.
 func (c *Client) DeleteReplicationController(name string) error {
 	return c.Delete().Path("replicationControllers").Path(name).Do().Error()
+}
+
+// ListDeployments takes a selector, and returns the list of deployments that match that selector
+func (c *Client) ListDeployments(selector labels.Selector) (result api.DeploymentList, err error) {
+	err = c.Get().Path("deployments").Selector(selector).Do().Into(&result)
+	return
+}
+
+// GetDeployment returns information about a particular replication deployment
+func (c *Client) GetDeployment(name string) (result api.Deployment, err error) {
+	err = c.Get().Path("deployments").Path(name).Do().Into(&result)
+	return
+}
+
+// CreateDeployment creates a new replication deployment
+func (c *Client) CreateDeployment(deployment api.Deployment) (result api.Deployment, err error) {
+	err = c.Post().Path("deployments").Body(deployment).Do().Into(&result)
+	return
+}
+
+// UpdateDeployment updates an existing replication deployment
+func (c *Client) UpdateDeployment(deployment api.Deployment) (result api.Deployment, err error) {
+	err = c.Put().Path("deployments").Path(deployment.ID).Body(deployment).Do().Into(&result)
+	return
+}
+
+// DeleteDeployment deletes an existing replication deployment.
+func (c *Client) DeleteDeployment(name string) error {
+	return c.Delete().Path("deployments").Path(name).Do().Error()
 }
 
 // GetService returns information about a particular service.
