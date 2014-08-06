@@ -46,6 +46,29 @@ func (v jsonBaseResourceVersioner) SetResourceVersion(obj interface{}, version u
 	return nil
 }
 
+func NewJSONBaseResourceTimestamper() resourceTimestamper {
+	return &jsonBaseResourceTimestamper{}
+}
+
+type jsonBaseResourceTimestamper struct{}
+
+func (t jsonBaseResourceTimestamper) CreationTimestamp(obj interface{}) (string, error) {
+	json, err := FindJSONBaseRO(obj)
+	if err != nil {
+		return "", err
+	}
+	return json.CreationTimestamp, nil
+}
+
+func (t jsonBaseResourceTimestamper) SetCreationTimestamp(obj interface{}, ts string) error {
+	json, err := FindJSONBase(obj)
+	if err != nil {
+		return err
+	}
+	json.SetCreationTimestamp(ts)
+	return nil
+}
+
 // JSONBase lets you work with a JSONBase from any of the versioned or
 // internal APIObjects.
 type JSONBaseInterface interface {
@@ -57,13 +80,16 @@ type JSONBaseInterface interface {
 	SetKind(kind string)
 	ResourceVersion() uint64
 	SetResourceVersion(version uint64)
+	CreationTimestamp() string
+	SetCreationTimestamp(ts string)
 }
 
 type genericJSONBase struct {
-	id              *string
-	apiVersion      *string
-	kind            *string
-	resourceVersion *uint64
+	id                *string
+	apiVersion        *string
+	kind              *string
+	resourceVersion   *uint64
+	creationTimestamp *string
 }
 
 func (g genericJSONBase) ID() string {
@@ -96,6 +122,14 @@ func (g genericJSONBase) ResourceVersion() uint64 {
 
 func (g genericJSONBase) SetResourceVersion(version uint64) {
 	*g.resourceVersion = version
+}
+
+func (g genericJSONBase) CreationTimestamp() string {
+	return *g.creationTimestamp
+}
+
+func (g genericJSONBase) SetCreationTimestamp(ts string) {
+	*g.creationTimestamp = ts
 }
 
 // fieldPtr puts the address address of fieldName, which must be a member of v,
@@ -138,6 +172,9 @@ func newGenericJSONBase(v reflect.Value) (genericJSONBase, error) {
 		return g, err
 	}
 	if err := fieldPtr(v, "ResourceVersion", &g.resourceVersion); err != nil {
+		return g, err
+	}
+	if err := fieldPtr(v, "CreationTimestamp", &g.creationTimestamp); err != nil {
 		return g, err
 	}
 	return g, nil

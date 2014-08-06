@@ -40,8 +40,14 @@ type resourceVersioner interface {
 	ResourceVersion(obj interface{}) (uint64, error)
 }
 
+type resourceTimestamper interface {
+	SetCreationTimestamp(obj interface{}, ts string) error
+	CreationTimestamp(obj interface{}) (string, error)
+}
+
 var Codec codec
 var ResourceVersioner resourceVersioner
+var ResourceTimestamper resourceTimestamper
 
 var conversionScheme *conversion.Scheme
 
@@ -107,6 +113,7 @@ func init() {
 
 	Codec = conversionScheme
 	ResourceVersioner = NewJSONBaseResourceVersioner()
+	ResourceTimestamper = NewJSONBaseResourceTimestamper()
 }
 
 // AddKnownTypes registers the types of the arguments to the marshaller of the package api.
@@ -235,6 +242,7 @@ func enforcePtr(obj interface{}) (reflect.Value, error) {
 	if v.Kind() != reflect.Ptr {
 		return reflect.Value{}, fmt.Errorf("expected pointer, but got %v", v.Type().Name())
 	}
+
 	return v.Elem(), nil
 }
 

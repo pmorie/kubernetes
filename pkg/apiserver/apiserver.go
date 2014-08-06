@@ -211,6 +211,13 @@ func (s *APIServer) handleRESTStorage(parts []string, req *http.Request, w http.
 			internalError(err, w)
 			return
 		}
+
+		err = api.ResourceTimestamper.SetCreationTimestamp(obj, time.Now().Format(time.UnixDate))
+		if err != nil {
+			internalError(err, w)
+			return
+		}
+
 		out, err := storage.Create(obj)
 		if IsNotFound(err) {
 			notFound(w, req)
