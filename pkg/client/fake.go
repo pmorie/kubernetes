@@ -18,6 +18,7 @@ package client
 
 import (
 	"github.com/GoogleCloudPlatform/kubernetes/pkg/api"
+	"github.com/GoogleCloudPlatform/kubernetes/pkg/build/buildapi"
 	"github.com/GoogleCloudPlatform/kubernetes/pkg/labels"
 	"github.com/GoogleCloudPlatform/kubernetes/pkg/watch"
 )
@@ -102,4 +103,14 @@ func (client *FakeClient) UpdateService(controller api.Service) (api.Service, er
 func (client *FakeClient) DeleteService(controller string) error {
 	client.Actions = append(client.Actions, "delete-service")
 	return nil
+}
+
+func (client *FakeClient) ListBuilds() (buildapi.BuildList, error) {
+	client.Actions = append(client.Actions, "list-builds")
+	return buildapi.BuildList{}, nil
+}
+
+func (client *FakeClient) UpdateBuild(buildapi.Build) (buildapi.Build, error) {
+	client.Actions = append(client.Actions, "update-build")
+	return buildapi.Build{}, nil
 }
