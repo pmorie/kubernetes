@@ -43,7 +43,6 @@ var apiObjectFuzzer = fuzz.New().NilChance(.5).NumElements(1, 1).Funcs(
 		// only when all 8 bytes are set.
 		j.ResourceVersion = c.RandUint64() >> 8
 		j.SelfLink = c.RandString()
-		j.CreationTimestamp = c.RandString()
 	},
 	func(intstr *util.IntOrString, c fuzz.Continue) {
 		// util.IntOrString will panic if its kind is set wrong.

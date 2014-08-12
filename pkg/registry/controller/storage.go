@@ -61,6 +61,9 @@ func (rs *RegistryStorage) Create(obj interface{}) (<-chan interface{}, error) {
 	if errs := api.ValidateReplicationController(controller); len(errs) > 0 {
 		return nil, fmt.Errorf("Validation errors: %v", errs)
 	}
+
+	controller.CreationTimestamp = time.Now()
+
 	return apiserver.MakeAsync(func() (interface{}, error) {
 		err := rs.registry.CreateController(*controller)
 		if err != nil {
