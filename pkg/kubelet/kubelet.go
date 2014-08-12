@@ -323,6 +323,7 @@ func (kl *Kubelet) runContainer(pod *Pod, container *api.Container, podVolumes v
 func (kl *Kubelet) killContainer(dockerContainer *docker.APIContainers) error {
 	glog.Infof("Killing: %s", dockerContainer.ID)
 	err := kl.dockerClient.StopContainer(dockerContainer.ID, 10)
+	err = kl.dockerClient.RemoveContainer(docker.RemoveContainerOptions{ID: dockerContainer.ID, Force: true})
 	podFullName, containerName, _ := parseDockerName(dockerContainer.Names[0])
 	kl.LogEvent(&api.Event{
 		Event: "STOP",
@@ -451,8 +452,21 @@ func (kl *Kubelet) syncPod(pod *Pod, dockerContainers DockerContainers) error {
 
 			// look for changes in the container.
 			if hash == 0 || hash == expectedHash {
+				var c *docker.Container
+				var cerr error
+				if c, cerr = kl.dockerClient.InspectContainer(dockerContainer.ID); cerr != nil || c == nil {
+					glog.Errorf("couldn't find docker container with id %v: %s", dockerContainer.ID, cerr)
+					continue
+				}
+
+				if !c.State.Running && container.RestartPolicy == "runOnce" {
+					glog.Infof("allowing pod %s container %s (id %v) to remain stopped due to runOnce restart policy", podFullName, container.Name, containerID)
+					containersToKeep[containerID] = empty{}
+					continue
+				}
+
 				// TODO: This should probably be separated out into a separate goroutine.
-				healthy, err := kl.healthy(podState, container, dockerContainer)
+				healthy, err := kl.healthy(podState, container, dockerContainer, c)
 				if err != nil {
 					glog.V(1).Infof("health check errored: %v", err)
 					continue
@@ -703,10 +717,14 @@ func (kl *Kubelet) GetMachineInfo() (*info.MachineInfo, error) {
 	return kl.cadvisorClient.MachineInfo()
 }
 
-func (kl *Kubelet) healthy(currentState api.PodState, container api.Container, dockerContainer *docker.APIContainers) (health.Status, error) {
+func (kl *Kubelet) healthy(currentState api.PodState, container api.Container, dockerContainer *docker.APIContainers, c *docker.Container) (health.Status, error) {
 	// Give the container 60 seconds to start up.
 	if container.LivenessProbe == nil {
-		return health.Healthy, nil
+		if c.State.Running {
+			return health.Healthy, nil
+		} else {
+			return health.Unhealthy, nil
+		}
 	}
 	if time.Now().Unix()-dockerContainer.Created < container.LivenessProbe.InitialDelaySeconds {
 		return health.Healthy, nil
