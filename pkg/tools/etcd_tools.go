@@ -259,7 +259,6 @@ type EtcdUpdateFunc func(input interface{}) (output interface{}, err error)
 // })
 //
 func (h *EtcdHelper) AtomicUpdate(key string, ptrToType interface{}, tryUpdate EtcdUpdateFunc) error {
-	fmt.Println("AtomicUpdate", key)
 	pt := reflect.TypeOf(ptrToType)
 	if pt.Kind() != reflect.Ptr {
 		// Panic is appropriate, because this is a programming error.
