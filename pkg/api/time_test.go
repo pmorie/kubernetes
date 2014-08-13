@@ -20,24 +20,24 @@ import (
 	"encoding/json"
 	"reflect"
 	"testing"
+	"time"
 )
 
-func TestAPIObject(t *testing.T) {
-	type EmbeddedTest struct {
-		JSONBase    `yaml:",inline" json:",inline"`
-		Object      APIObject `yaml:"object,omitempty" json:"object,omitempty"`
-		EmptyObject APIObject `yaml:"emptyObject,omitempty" json:"emptyObject,omitempty"`
-	}
-	AddKnownTypes("", EmbeddedTest{})
-	AddKnownTypes("v1beta1", EmbeddedTest{})
+func LossyTestNow() Time {
+	t, _ := time.Parse(time.RFC3339, time.Now().Format(time.RFC3339))
+	return Time{t}
+}
 
-	outer := &EmbeddedTest{
-		JSONBase: JSONBase{ID: "outer", CreationTimestamp: LossyTestNow()},
-		Object: APIObject{
-			&EmbeddedTest{
-				JSONBase: JSONBase{ID: "inner", CreationTimestamp: LossyTestNow()},
-			},
-		},
+func TestTime(t *testing.T) {
+	type EmbeddedTimeTest struct {
+		JSONBase `yaml:",inline" json:",inline"`
+	}
+
+	AddKnownTypes("", EmbeddedTimeTest{})
+	AddKnownTypes("v1beta1", EmbeddedTimeTest{})
+
+	outer := &EmbeddedTimeTest{
+		JSONBase: JSONBase{ID: "test", CreationTimestamp: LossyTestNow()},
 	}
 
 	wire, err := Encode(outer)
@@ -57,7 +57,7 @@ func TestAPIObject(t *testing.T) {
 	}
 
 	// test JSON decoding, too, since api.Decode uses yaml unmarshalling.
-	var decodedViaJSON EmbeddedTest
+	var decodedViaJSON EmbeddedTimeTest
 	err = json.Unmarshal(wire, &decodedViaJSON)
 	if err != nil {
 		t.Fatalf("Unexpected decode error %v", err)

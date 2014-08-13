@@ -200,12 +200,12 @@ type Event struct {
 
 // JSONBase is shared by all objects sent to, or returned from the client
 type JSONBase struct {
-	Kind              string    `json:"kind,omitempty" yaml:"kind,omitempty"`
-	ID                string    `json:"id,omitempty" yaml:"id,omitempty"`
-	CreationTimestamp time.Time `json:"creationTimestamp,omitempty" yaml:"creationTimestamp,omitempty"`
-	SelfLink          string    `json:"selfLink,omitempty" yaml:"selfLink,omitempty"`
-	ResourceVersion   uint64    `json:"resourceVersion,omitempty" yaml:"resourceVersion,omitempty"`
-	APIVersion        string    `json:"apiVersion,omitempty" yaml:"apiVersion,omitempty"`
+	Kind              string `json:"kind,omitempty" yaml:"kind,omitempty"`
+	ID                string `json:"id,omitempty" yaml:"id,omitempty"`
+	CreationTimestamp Time   `json:"creationTimestamp,omitempty" yaml:"creationTimestamp,omitempty"`
+	SelfLink          string `json:"selfLink,omitempty" yaml:"selfLink,omitempty"`
+	ResourceVersion   uint64 `json:"resourceVersion,omitempty" yaml:"resourceVersion,omitempty"`
+	APIVersion        string `json:"apiVersion,omitempty" yaml:"apiVersion,omitempty"`
 }
 
 // PodStatus represents a status of a pod.
@@ -472,4 +472,8 @@ type WatchEvent struct {
 // embedded within other API objects.
 type APIObject struct {
 	Object interface{}
+}
+
+type Time struct {
+	time.Time
 }

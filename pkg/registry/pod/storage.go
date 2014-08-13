@@ -77,7 +77,7 @@ func (rs *RegistryStorage) Create(obj interface{}) (<-chan interface{}, error) {
 		return nil, fmt.Errorf("Validation errors: %v", errs)
 	}
 
-	pod.CreationTimestamp = time.Now()
+	pod.CreationTimestamp = api.Now()
 
 	return apiserver.MakeAsync(func() (interface{}, error) {
 		if err := rs.scheduleAndCreatePod(*pod); err != nil {
