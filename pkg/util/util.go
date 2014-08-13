@@ -143,6 +143,66 @@ func (intstr IntOrString) MarshalJSON() ([]byte, error) {
 	}
 }
 
+type Time struct {
+	time.Time
+}
+
+func (t *Time) UnmarshalJSON(b []byte) error {
+	fmt.Println("KubeTime.UnmarshalJSON")
+
+	var str string
+	json.Unmarshal(b, &str)
+
+	pt, err := time.Parse(time.RFC3339, str)
+	if err != nil {
+		return err
+	}
+
+	fmt.Println("JSON Setting time", pt)
+
+	t.Time = pt
+	return nil
+}
+
+// MarshalJSON implements the json.Marshaler interface.
+func (t Time) MarshalJSON() ([]byte, error) {
+	fmt.Println("KubeTime.MarshalJSON")
+	return json.Marshal(t.Format(time.RFC3339))
+}
+
+func (t *Time) SetYAML(tag string, value interface{}) bool {
+	str, ok := value.(string)
+	if !ok {
+		return false
+	}
+
+	fmt.Println("KubeTime.SetYAML", str)
+
+	pt, err := time.Parse(time.RFC3339, str)
+	if err != nil {
+		return false
+	}
+
+	fmt.Println("YAML Setting time", pt)
+	t.Time = pt
+	return true
+}
+
+func (t Time) GetYAML() (tag string, value interface{}) {
+	fmt.Println("KubeTime.GetYAML")
+	value = t.Format(time.RFC3339)
+	return tag, value
+}
+
+func Now() Time {
+	return Time{time.Now()}
+}
+
+func LossyTestNow() Time {
+	t, _ := time.Parse(time.RFC3339, time.Now().Format(time.RFC3339))
+	return Time{t}
+}
+
 // StringDiff diffs a and b and returns a human readable diff.
 func StringDiff(a, b string) string {
 	ba := []byte(a)

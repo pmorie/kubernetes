@@ -28,7 +28,7 @@ import (
 	"github.com/google/gofuzz"
 )
 
-var fuzzIters = flag.Int("fuzz_iters", 50, "How many fuzzing iterations to do.")
+var fuzzIters = flag.Int("fuzz_iters", 5, "How many fuzzing iterations to do.")
 
 // apiObjectFuzzer can randomly populate api objects.
 var apiObjectFuzzer = fuzz.New().NilChance(.5).NumElements(1, 1).Funcs(
@@ -43,6 +43,7 @@ var apiObjectFuzzer = fuzz.New().NilChance(.5).NumElements(1, 1).Funcs(
 		// only when all 8 bytes are set.
 		j.ResourceVersion = c.RandUint64() >> 8
 		j.SelfLink = c.RandString()
+		j.CreationTimestamp = util.LossyTestNow()
 	},
 	func(intstr *util.IntOrString, c fuzz.Continue) {
 		// util.IntOrString will panic if its kind is set wrong.
@@ -112,6 +113,8 @@ func runTest(t *testing.T, source interface{}) {
 		t.Errorf("%v: %v (%#v)", name, err, source)
 		return
 	}
+
+	fmt.Println("Wire format", string(data))
 	obj2, err := Decode(data)
 	if err != nil {
 		t.Errorf("%v: %v", name, err)
@@ -163,7 +166,8 @@ func TestTypes(t *testing.T) {
 
 func TestEncode_NonPtr(t *testing.T) {
 	pod := Pod{
-		Labels: map[string]string{"name": "foo"},
+		JSONBase: JSONBase{CreationTimestamp: util.LossyTestNow()},
+		Labels:   map[string]string{"name": "foo"},
 	}
 	obj := interface{}(pod)
 	data, err := Encode(obj)
@@ -181,7 +185,8 @@ func TestEncode_NonPtr(t *testing.T) {
 
 func TestEncode_Ptr(t *testing.T) {
 	pod := &Pod{
-		Labels: map[string]string{"name": "foo"},
+		JSONBase: JSONBase{CreationTimestamp: util.LossyTestNow()},
+		Labels:   map[string]string{"name": "foo"},
 	}
 	obj := interface{}(pod)
 	data, err := Encode(obj)

@@ -20,6 +20,7 @@ import (
 	"encoding/json"
 	"testing"
 
+	"github.com/GoogleCloudPlatform/kubernetes/pkg/util"
 	"gopkg.in/v1/yaml"
 )
 

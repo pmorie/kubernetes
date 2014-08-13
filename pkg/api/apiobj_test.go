@@ -20,6 +20,8 @@ import (
 	"encoding/json"
 	"reflect"
 	"testing"
+
+	"github.com/GoogleCloudPlatform/kubernetes/pkg/util"
 )
 
 func TestAPIObject(t *testing.T) {
@@ -32,10 +34,10 @@ func TestAPIObject(t *testing.T) {
 	AddKnownTypes("v1beta1", EmbeddedTest{})
 
 	outer := &EmbeddedTest{
-		JSONBase: JSONBase{ID: "outer", CreationTimestamp: LossyTestNow()},
+		JSONBase: JSONBase{ID: "outer", CreationTimestamp: util.LossyTestNow()},
 		Object: APIObject{
 			&EmbeddedTest{
-				JSONBase: JSONBase{ID: "inner", CreationTimestamp: LossyTestNow()},
+				JSONBase: JSONBase{ID: "inner", CreationTimestamp: util.LossyTestNow()},
 			},
 		},
 	}
