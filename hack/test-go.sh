@@ -39,7 +39,7 @@ KUBE_COVER="-cover -covermode=atomic"
 cd "${KUBE_TARGET}"
 
 if [ "$1" != "" ]; then
-  go test -race -timeout 30s $KUBE_COVER -coverprofile=tmp.out "$KUBE_GO_PACKAGE/$1" "${@:2}"
+  go test -race -timeout 1s $KUBE_COVER -coverprofile=tmp.out "$KUBE_GO_PACKAGE/$1" "${@:2}"
   exit 0
 fi
 

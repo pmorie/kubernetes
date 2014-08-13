@@ -79,7 +79,6 @@ func (r *Registry) ListPods(selector labels.Selector) ([]api.Pod, error) {
 
 // GetPod gets a specific pod specified by its ID.
 func (r *Registry) GetPod(podID string) (*api.Pod, error) {
-	fmt.Println("GetPod")
 	var pod api.Pod
 	if err := r.ExtractObj(makePodKey(podID), &pod, false); err != nil {
 		return nil, err
@@ -97,7 +96,6 @@ func makeContainerKey(machine string) string {
 
 // CreatePod creates a pod based on a specification, schedule it onto a specific machine.
 func (r *Registry) CreatePod(machine string, pod api.Pod) error {
-	fmt.Println("CreatePod")
 	// Set current status to "Waiting".
 	pod.CurrentState.Status = api.PodWaiting
 	pod.CurrentState.Host = ""
@@ -114,12 +112,10 @@ func (r *Registry) CreatePod(machine string, pod api.Pod) error {
 // AssignPod assigns the given pod to the given machine.
 // TODO: hook this up via apiserver, not by calling it from CreatePod().
 func (r *Registry) AssignPod(podID string, machine string) error {
-	fmt.Println("AssignPod")
 	podKey := makePodKey(podID)
 	var finalPod *api.Pod
 	err := r.AtomicUpdate(podKey, &api.Pod{}, func(obj interface{}) (interface{}, error) {
 		pod, ok := obj.(*api.Pod)
-		fmt.Println("Existing pod:", pod)
 		if !ok {
 			return nil, fmt.Errorf("unexpected object: %#v", obj)
 		}
@@ -158,7 +154,6 @@ func (r *Registry) UpdatePod(pod api.Pod) error {
 
 // DeletePod deletes an existing pod specified by its ID.
 func (r *Registry) DeletePod(podID string) error {
-	fmt.Println("DeletePod")
 	var pod api.Pod
 	podKey := makePodKey(podID)
 	err := r.ExtractObj(podKey, &pod, false)
@@ -229,7 +224,6 @@ func makeControllerKey(id string) string {
 
 // GetController gets a specific ReplicationController specified by its ID.
 func (r *Registry) GetController(controllerID string) (*api.ReplicationController, error) {
-	fmt.Println("GetController")
 	var controller api.ReplicationController
 	key := makeControllerKey(controllerID)
 	err := r.ExtractObj(key, &controller, false)
@@ -288,7 +282,6 @@ func (r *Registry) CreateService(svc api.Service) error {
 
 // GetService obtains a Service specified by its name.
 func (r *Registry) GetService(name string) (*api.Service, error) {
-	fmt.Println("GetService")
 	key := makeServiceKey(name)
 	var svc api.Service
 	err := r.ExtractObj(key, &svc, false)

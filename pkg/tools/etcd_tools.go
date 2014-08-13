@@ -165,13 +165,11 @@ func (h *EtcdHelper) ExtractList(key string, slicePtr interface{}) error {
 // a zero object of the requested type, or an error, depending on ignoreNotFound. Treats
 // empty responses and nil response nodes exactly like a not found error.
 func (h *EtcdHelper) ExtractObj(key string, objPtr interface{}, ignoreNotFound bool) error {
-	fmt.Println("ExtractObj")
 	_, _, err := h.bodyAndExtractObj(key, objPtr, ignoreNotFound)
 	return err
 }
 
 func (h *EtcdHelper) bodyAndExtractObj(key string, objPtr interface{}, ignoreNotFound bool) (body string, modifiedIndex uint64, err error) {
-	fmt.Println("bodyAndExtractObj")
 	response, err := h.Client.Get(key, false, false)
 
 	if err != nil && !IsEtcdNotFound(err) {
@@ -179,7 +177,6 @@ func (h *EtcdHelper) bodyAndExtractObj(key string, objPtr interface{}, ignoreNot
 	}
 	if err != nil || response.Node == nil || len(response.Node.Value) == 0 {
 		if ignoreNotFound {
-			fmt.Println("bodyAndExtractObj returning zero-value")
 			pv := reflect.ValueOf(objPtr)
 			pv.Elem().Set(reflect.Zero(pv.Type().Elem()))
 			return "", 0, nil
@@ -189,7 +186,6 @@ func (h *EtcdHelper) bodyAndExtractObj(key string, objPtr interface{}, ignoreNot
 		return "", 0, fmt.Errorf("key '%v' found no nodes field: %#v", key, response)
 	}
 	body = response.Node.Value
-	fmt.Println("body", body)
 	err = h.Codec.DecodeInto([]byte(body), objPtr)
 	if h.ResourceVersioner != nil {
 		_ = h.ResourceVersioner.SetResourceVersion(objPtr, response.Node.ModifiedIndex)
@@ -276,14 +272,11 @@ func (h *EtcdHelper) AtomicUpdate(key string, ptrToType interface{}, tryUpdate E
 			return err
 		}
 
-		fmt.Println("obj", obj)
-
 		ret, err := tryUpdate(obj)
 		if err != nil {
 			return err
 		}
 
-		fmt.Println("tryUpdate return value:", ret)
 		data, err := h.Codec.Encode(ret)
 		if err != nil {
 			return err

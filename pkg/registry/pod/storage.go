@@ -28,6 +28,7 @@ import (
 	"github.com/GoogleCloudPlatform/kubernetes/pkg/cloudprovider"
 	"github.com/GoogleCloudPlatform/kubernetes/pkg/labels"
 	"github.com/GoogleCloudPlatform/kubernetes/pkg/scheduler"
+	"github.com/GoogleCloudPlatform/kubernetes/pkg/util"
 
 	"code.google.com/p/go-uuid/uuid"
 	"github.com/golang/glog"
@@ -77,7 +78,7 @@ func (rs *RegistryStorage) Create(obj interface{}) (<-chan interface{}, error) {
 		return nil, fmt.Errorf("Validation errors: %v", errs)
 	}
 
-	pod.CreationTimestamp = api.Now()
+	pod.CreationTimestamp = util.Now()
 
 	return apiserver.MakeAsync(func() (interface{}, error) {
 		if err := rs.scheduleAndCreatePod(*pod); err != nil {

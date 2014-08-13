@@ -24,6 +24,7 @@ import (
 	"github.com/GoogleCloudPlatform/kubernetes/pkg/apiserver"
 	"github.com/GoogleCloudPlatform/kubernetes/pkg/labels"
 	"github.com/GoogleCloudPlatform/kubernetes/pkg/registry/pod"
+	"github.com/GoogleCloudPlatform/kubernetes/pkg/util"
 	"github.com/GoogleCloudPlatform/kubernetes/pkg/watch"
 
 	"code.google.com/p/go-uuid/uuid"
@@ -62,9 +63,7 @@ func (rs *RegistryStorage) Create(obj interface{}) (<-chan interface{}, error) {
 		return nil, fmt.Errorf("Validation errors: %v", errs)
 	}
 
-	controller.CreationTimestamp = api.Now()
-
-	fmt.Println("controller", controller)
+	controller.CreationTimestamp = util.Now()
 
 	return apiserver.MakeAsync(func() (interface{}, error) {
 		err := rs.registry.CreateController(*controller)

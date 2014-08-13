@@ -114,7 +114,6 @@ func runTest(t *testing.T, source interface{}) {
 		return
 	}
 
-	fmt.Println("Wire format", string(data))
 	obj2, err := Decode(data)
 	if err != nil {
 		t.Errorf("%v: %v", name, err)
@@ -166,8 +165,7 @@ func TestTypes(t *testing.T) {
 
 func TestEncode_NonPtr(t *testing.T) {
 	pod := Pod{
-		JSONBase: JSONBase{CreationTimestamp: util.LossyTestNow()},
-		Labels:   map[string]string{"name": "foo"},
+		Labels: map[string]string{"name": "foo"},
 	}
 	obj := interface{}(pod)
 	data, err := Encode(obj)
@@ -185,8 +183,7 @@ func TestEncode_NonPtr(t *testing.T) {
 
 func TestEncode_Ptr(t *testing.T) {
 	pod := &Pod{
-		JSONBase: JSONBase{CreationTimestamp: util.LossyTestNow()},
-		Labels:   map[string]string{"name": "foo"},
+		Labels: map[string]string{"name": "foo"},
 	}
 	obj := interface{}(pod)
 	data, err := Encode(obj)

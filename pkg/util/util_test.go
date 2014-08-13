@@ -19,8 +19,8 @@ package util
 import (
 	"encoding/json"
 	"testing"
+	"time"
 
-	"github.com/GoogleCloudPlatform/kubernetes/pkg/util"
 	"gopkg.in/v1/yaml"
 )
 
@@ -177,5 +177,93 @@ func TestStringDiff(t *testing.T) {
 	expect := "aaa\n\nA: bb\n\nB: cc\n\n"
 	if diff != expect {
 		t.Errorf("diff returned %v", diff)
+	}
+}
+
+type TimeHolder struct {
+	T Time `json:"t" yaml:"t"`
+}
+
+func TestTimeMarshalYAML(t *testing.T) {
+	cases := []struct {
+		input  Time
+		result string
+	}{
+		{Time{}, "t: \"null\"\n"},
+		{Date(1998, time.May, 5, 5, 5, 5, 50, time.UTC), "t: 1998-05-05T05:05:05Z\n"},
+		{Date(1998, time.May, 5, 5, 5, 5, 0, time.UTC), "t: 1998-05-05T05:05:05Z\n"},
+	}
+
+	for _, c := range cases {
+		input := TimeHolder{c.input}
+		result, err := yaml.Marshal(&input)
+		if err != nil {
+			t.Errorf("Failed to marshal: %v", err)
+		}
+		if string(result) != c.result {
+			t.Errorf("Failed to marshal TimeHolder: got %q", string(result))
+		}
+	}
+}
+
+func TestTimeUnmarshalYAML(t *testing.T) {
+	cases := []struct {
+		input  string
+		result Time
+	}{
+		{"t: \"null\"\n", Time{}},
+		{"t: 1998-05-05T05:05:05Z\n", Date(1998, time.May, 5, 5, 5, 5, 0, time.UTC)},
+	}
+
+	for _, c := range cases {
+		var result TimeHolder
+		if err := yaml.Unmarshal([]byte(c.input), &result); err != nil {
+			t.Errorf("Failed to unmarshal: %v", err)
+		}
+		if result.T != c.result {
+			t.Errorf("Failed to unmarshal TimeHolder: got %+v", result)
+		}
+	}
+}
+
+func TestTimeMarshalJSON(t *testing.T) {
+	cases := []struct {
+		input  Time
+		result string
+	}{
+		{Time{}, "{\"t\":null}"},
+		{Date(1998, time.May, 5, 5, 5, 5, 50, time.UTC), "{\"t\":\"1998-05-05T05:05:05Z\"}"},
+		{Date(1998, time.May, 5, 5, 5, 5, 0, time.UTC), "{\"t\":\"1998-05-05T05:05:05Z\"}"},
+	}
+
+	for _, c := range cases {
+		input := TimeHolder{c.input}
+		result, err := json.Marshal(&input)
+		if err != nil {
+			t.Errorf("Failed to marshal: %v", err)
+		}
+		if string(result) != c.result {
+			t.Errorf("Failed to marshal TimeHolder: got %q", string(result))
+		}
+	}
+}
+
+func TestTimeUnmarshalJSON(t *testing.T) {
+	cases := []struct {
+		input  string
+		result Time
+	}{
+		{"{\"t\":null}", Time{}},
+		{"{\"t\":\"1998-05-05T05:05:05Z\"}", Date(1998, time.May, 5, 5, 5, 5, 0, time.UTC)},
+	}
+
+	for _, c := range cases {
+		var result TimeHolder
+		if err := json.Unmarshal([]byte(c.input), &result); err != nil {
+			t.Errorf("Failed to unmarshal: %v", err)
+		}
+		if result.T != c.result {
+			t.Errorf("Failed to unmarshal TimeHolder: got %+v", result)
+		}
 	}
 }
