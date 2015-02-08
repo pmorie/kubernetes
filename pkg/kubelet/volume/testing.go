@@ -21,6 +21,7 @@ import (
 	"path"
 
 	"github.com/GoogleCloudPlatform/kubernetes/pkg/api"
+	"github.com/GoogleCloudPlatform/kubernetes/pkg/client"
 	"github.com/GoogleCloudPlatform/kubernetes/pkg/types"
 )
 
@@ -39,6 +40,11 @@ func (f *FakeHost) GetPodVolumeDir(podUID types.UID, pluginName, volumeName stri
 
 func (f *FakeHost) GetPodPluginDir(podUID types.UID, pluginName string) string {
 	return path.Join(f.RootDir, "pods", string(podUID), "plugins", pluginName)
+}
+
+// TODO: fake client?
+func (f *FakeHost) GetKubeClient() *client.Client {
+	return nil
 }
 
 // FakePlugin is useful for for testing.  It tries to be a fully compliant
