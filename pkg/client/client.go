@@ -40,6 +40,7 @@ type Interface interface {
 	LimitRangesNamespacer
 	ResourceQuotasNamespacer
 	ResourceQuotaUsagesNamespacer
+	SecretsNamespacer
 }
 
 func (c *Client) ReplicationControllers(namespace string) ReplicationControllerInterface {
@@ -76,6 +77,10 @@ func (c *Client) ResourceQuotas(namespace string) ResourceQuotaInterface {
 
 func (c *Client) ResourceQuotaUsages(namespace string) ResourceQuotaUsageInterface {
 	return newResourceQuotaUsages(c, namespace)
+}
+
+func (c *Client) Secrets(namespace string) SecretsInterface {
+	return newSecrets(c, namespace)
 }
 
 // VersionInterface has a method to retrieve the server version.
