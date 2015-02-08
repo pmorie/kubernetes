@@ -172,11 +172,19 @@ const (
 // Secret holds mappings between paths and secret data
 // TODO: shouldn't "Secret" be a plural?
 type Secret struct {
-	TypeMeta
-	ObjectMeta
-	// Keys are paths relative to the volume presented to a container for this secret data.
-	// Values are the secrets to be stored.
-	Data map[string][]byte
+	TypeMeta `json:",inline"`
+	ListMeta `json:"metadata,omitempty"`
+
+	// Keys in the Data map are paths relative to the volume presented to a container
+	// for this secret data; values are the secrets to be stored.
+	Data map[string][]byte `json:"data,omitempty"`
+}
+
+type SecretList struct {
+	TypeMeta `json:",inline"`
+	ListMeta `json:"metadata,omitempty"`
+
+	Items []Secret `json:"items"`
 }
 
 // Adapts a Secret into a VolumeSource
