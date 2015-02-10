@@ -777,6 +777,22 @@ func ValidateLimitRange(limitRange *api.LimitRange) errs.ValidationErrorList {
 	return allErrs
 }
 
+// ValidateSecret tests if required fields in the Secret are set.
+func ValidateSecret(secret *api.Secret) errs.ValidationErrorList {
+	allErrs := errs.ValidationErrorList{}
+	if len(secret.Name) == 0 {
+		allErrs = append(allErrs, errs.NewFieldRequired("name", secret.Name))
+	} else if !util.IsDNSSubdomain(secret.Name) {
+		allErrs = append(allErrs, errs.NewFieldInvalid("name", secret.Name, ""))
+	}
+	if len(secret.Namespace) == 0 {
+		allErrs = append(allErrs, errs.NewFieldRequired("namespace", secret.Namespace))
+	} else if !util.IsDNSSubdomain(secret.Namespace) {
+		allErrs = append(allErrs, errs.NewFieldInvalid("namespace", secret.Namespace, ""))
+	}
+	return allErrs
+}
+
 func validateBasicResource(quantity resource.Quantity) errs.ValidationErrorList {
 	if quantity.Value() < 0 {
 		return errs.ValidationErrorList{fmt.Errorf("%v is not a valid resource quantity", quantity.Value())}
