@@ -123,7 +123,7 @@ type Master struct {
 	eventRegistry         generic.Registry
 	limitRangeRegistry    generic.Registry
 	resourceQuotaRegistry resourcequota.Registry
-	secret                generic.Registry
+	secretRegistry        generic.Registry
 	storage               map[string]apiserver.RESTStorage
 	client                *client.Client
 	portalNet             *net.IPNet
@@ -284,7 +284,7 @@ func New(c *Config) *Master {
 		minionRegistry:        minionRegistry,
 		limitRangeRegistry:    limitrange.NewEtcdRegistry(c.EtcdHelper),
 		resourceQuotaRegistry: resourcequota.NewEtcdRegistry(c.EtcdHelper),
-		secret:                secret.NewEtcdRegistry(c.EtcdHelper),
+		secretRegistry:        secret.NewEtcdRegistry(c.EtcdHelper),
 		client:                c.Client,
 		portalNet:             c.PortalNet,
 		rootWebService:        new(restful.WebService),
@@ -403,6 +403,7 @@ func (m *Master) init(c *Config) {
 		"limitRanges":         limitrange.NewREST(m.limitRangeRegistry),
 		"resourceQuotas":      resourcequota.NewREST(m.resourceQuotaRegistry),
 		"resourceQuotaUsages": resourcequotausage.NewREST(m.resourceQuotaRegistry),
+		"secrets":             secret.NewREST(m.secretRegistry),
 	}
 
 	apiVersions := []string{"v1beta1", "v1beta2"}
