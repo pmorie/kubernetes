@@ -152,3 +152,7 @@ func (rs *REST) Watch(ctx api.Context, label, field labels.Selector, resourceVer
 func (*REST) New() runtime.Object {
 	return &api.Secret{}
 }
+
+func (*REST) NewList() runtime.Object {
+	return &api.SecretList{}
+}
