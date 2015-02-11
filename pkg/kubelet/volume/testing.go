@@ -27,7 +27,8 @@ import (
 
 // FakeHost is useful for testing volume plugins.
 type FakeHost struct {
-	RootDir string
+	RootDir    string
+	KubeClient client.Interface
 }
 
 func (f *FakeHost) GetPluginDir(podUID string) string {
@@ -43,8 +44,8 @@ func (f *FakeHost) GetPodPluginDir(podUID types.UID, pluginName string) string {
 }
 
 // TODO: fake client?
-func (f *FakeHost) GetKubeClient() *client.Client {
-	return nil
+func (f *FakeHost) GetKubeClient() client.Interface {
+	return f.KubeClient
 }
 
 // FakePlugin is useful for for testing.  It tries to be a fully compliant

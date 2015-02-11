@@ -202,8 +202,8 @@ type VolumeSource struct {
 	GCEPersistentDisk *GCEPersistentDisk `json:"persistentDisk"`
 	// GitRepo represents a git repository at a particular revision.
 	GitRepo *GitRepo `json:"gitRepo"`
-	// SecretSource holds secrets to be placed on this volume.
-	SecretSource *SecretSource `json:"secret"`
+	// Secret represents a secret that should populate this volume.
+	Secret *SecretSource `json:"secret"`
 }
 
 // HostPath represents bare host directory volume.

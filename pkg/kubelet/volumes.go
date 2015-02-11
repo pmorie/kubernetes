@@ -49,7 +49,7 @@ func (vh *volumeHost) GetPodPluginDir(podUID types.UID, pluginName string) strin
 	return vh.kubelet.getPodPluginDir(podUID, pluginName)
 }
 
-func (vh *volumeHost) GetKubeClient() *client.Client {
+func (vh *volumeHost) GetKubeClient() client.Interface {
 	return vh.kubelet.kubeClient
 }
 

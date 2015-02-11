@@ -78,8 +78,8 @@ type Host interface {
 	// directory might not actually exist on disk yet.
 	GetPodPluginDir(podUID types.UID, pluginName string) string
 
-	// GetKubeClient returns a client for the master
-	GetKubeClient() *client.Client
+	// GetKubeClient returns a client interface
+	GetKubeClient() client.Interface
 }
 
 // PluginMgr tracks registered plugins.
