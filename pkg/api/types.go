@@ -150,6 +150,30 @@ const (
 	TerminationMessagePathDefault string = "/dev/termination-log"
 )
 
+// Secret holds mappings between paths and secret data
+// TODO: shouldn't "Secret" be a plural?
+type Secret struct {
+	TypeMeta   `json:",inline"`
+	ObjectMeta `json:"metadata,omitempty"`
+
+	// Keys in the Data map are paths relative to the volume presented to a container
+	// for this secret data; values are the secrets to be stored.
+	Data map[string][]byte `json:"data,omitempty"`
+}
+
+type SecretList struct {
+	TypeMeta `json:",inline"`
+	ListMeta `json:"metadata,omitempty"`
+
+	Items []Secret `json:"items"`
+}
+
+// Adapts a Secret into a VolumeSource
+type SecretSource struct {
+	// Reference to a Secret
+	Target ObjectReference
+}
+
 // Volume represents a named volume in a pod that may be accessed by any containers in the pod.
 type Volume struct {
 	// Required: This must be a DNS_LABEL.  Each volume in a pod must have
@@ -178,6 +202,8 @@ type VolumeSource struct {
 	GCEPersistentDisk *GCEPersistentDisk `json:"persistentDisk"`
 	// GitRepo represents a git repository at a particular revision.
 	GitRepo *GitRepo `json:"gitRepo"`
+	// Secret represents a secret that should populate this volume.
+	Secret *SecretSource `json:"secret"`
 }
 
 // HostPath represents bare host directory volume.
