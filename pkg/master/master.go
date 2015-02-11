@@ -54,6 +54,7 @@ import (
 	"github.com/GoogleCloudPlatform/kubernetes/pkg/registry/pod"
 	"github.com/GoogleCloudPlatform/kubernetes/pkg/registry/resourcequota"
 	"github.com/GoogleCloudPlatform/kubernetes/pkg/registry/resourcequotausage"
+	"github.com/GoogleCloudPlatform/kubernetes/pkg/registry/secret"
 	"github.com/GoogleCloudPlatform/kubernetes/pkg/registry/service"
 	"github.com/GoogleCloudPlatform/kubernetes/pkg/runtime"
 	"github.com/GoogleCloudPlatform/kubernetes/pkg/tools"
@@ -124,6 +125,7 @@ type Master struct {
 	limitRangeRegistry    generic.Registry
 	resourceQuotaRegistry resourcequota.Registry
 	namespaceRegistry     generic.Registry
+	secretRegistry        generic.Registry
 	storage               map[string]apiserver.RESTStorage
 	client                *client.Client
 	portalNet             *net.IPNet
@@ -285,6 +287,7 @@ func New(c *Config) *Master {
 		minionRegistry:        minionRegistry,
 		limitRangeRegistry:    limitrange.NewEtcdRegistry(c.EtcdHelper),
 		resourceQuotaRegistry: resourcequota.NewEtcdRegistry(c.EtcdHelper),
+		secretRegistry:        secret.NewEtcdRegistry(c.EtcdHelper),
 		client:                c.Client,
 		portalNet:             c.PortalNet,
 		rootWebService:        new(restful.WebService),
@@ -404,6 +407,7 @@ func (m *Master) init(c *Config) {
 		"resourceQuotas":      resourcequota.NewREST(m.resourceQuotaRegistry),
 		"resourceQuotaUsages": resourcequotausage.NewREST(m.resourceQuotaRegistry),
 		"namespaces":          namespace.NewREST(m.namespaceRegistry),
+		"secrets":             secret.NewREST(m.secretRegistry),
 	}
 
 	apiVersions := []string{"v1beta1", "v1beta2"}
