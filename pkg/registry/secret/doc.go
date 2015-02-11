@@ -14,6 +14,6 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-// Package secrets provides Registry interface and it's REST
+// Package secrets provides Registry interface and its REST
 // implementation for storing Secret api objects.
 package secret
