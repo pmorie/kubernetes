@@ -1,0 +1,36 @@
+{
+  "id": "secret-test-pod",
+  "kind": "Pod",
+  "apiVersion":"v1beta2",
+  "labels": {
+    "name": "hello-openshift"
+  },
+  "desiredState": {
+    "manifest": {
+      "version": "v1beta1",
+      "id": "secret-test-pod",
+      "containers": [{
+        "name": "hello-openshift",
+        "image": "busybox",
+        "command": [ "sh", "-c", "cat", "/etc/secret-volume/data-2" ],
+        "volumeMounts": [{
+          "name": "secret-volume",
+          "mountPath": "/etc/secret-volume",
+          "readOnly": true
+        }]
+      }],
+      "volumes": [{
+        "name": "secret-volume",
+        "source": {
+          "secret": {
+            "target": {
+              "kind": "Secret",
+              "namespace": "test",
+              "name": "test-secret"
+            }
+          }
+        }
+      }]
+    }
+  }
+}
