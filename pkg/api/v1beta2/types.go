@@ -86,7 +86,7 @@ type EmptyDir struct{}
 // Adapts a Secret into a VolumeSource
 type SecretSource struct {
 	// Reference to a Secret
-	Target ObjectReference
+	Target ObjectReference `json:"target"`
 }
 
 // Protocol defines network protocols supported for things like conatiner ports.

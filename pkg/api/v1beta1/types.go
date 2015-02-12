@@ -158,7 +158,7 @@ type GitRepo struct {
 // Adapts a Secret into a VolumeSource
 type SecretSource struct {
 	// Reference to a Secret
-	Target ObjectReference
+	Target ObjectReference `json:"target"`
 }
 
 // Port represents a network port in a single container
