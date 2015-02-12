@@ -29,7 +29,7 @@ func TestCanSupport(t *testing.T) {
 
 	plugin, err := pluginMgr.FindPluginByName(secretPluginName)
 	if err != nil {
-		t.Errorf("Can't find the pluginin by name")
+		t.Errorf("Can't find the plugin by name")
 	}
 	if plugin.Name() != secretPluginName {
 		t.Errorf("Wrong name: %s", plugin.Name())
