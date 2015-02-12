@@ -801,6 +801,7 @@ func ValidateLimitRange(limitRange *api.LimitRange) errs.ValidationErrorList {
 }
 
 // ValidateSecret tests if required fields in the Secret are set.
+// TODO: validate data size
 func ValidateSecret(secret *api.Secret) errs.ValidationErrorList {
 	allErrs := errs.ValidationErrorList{}
 	if len(secret.Name) == 0 {
