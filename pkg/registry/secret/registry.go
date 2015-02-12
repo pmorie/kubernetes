@@ -34,6 +34,7 @@ func NewEtcdRegistry(h tools.EtcdHelper) generic.Registry {
 	return registry{
 		Etcd: &etcdgeneric.Etcd{
 			NewFunc:      func() runtime.Object { return &api.Secret{} },
+			NewListFunc:  func() runtime.Object { return &api.SecretList{} },
 			EndpointName: "secret",
 			KeyRootFunc: func(ctx api.Context) string {
 				return etcdgeneric.NamespaceKeyRootFunc(ctx, "/registry/secret")
