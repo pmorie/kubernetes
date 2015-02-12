@@ -43,7 +43,6 @@ func (f *FakeHost) GetPodPluginDir(podUID types.UID, pluginName string) string {
 	return path.Join(f.RootDir, "pods", string(podUID), "plugins", pluginName)
 }
 
-// TODO: fake client?
 func (f *FakeHost) GetKubeClient() client.Interface {
 	return f.KubeClient
 }

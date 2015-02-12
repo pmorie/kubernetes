@@ -12,7 +12,7 @@ import (
 	"github.com/golang/glog"
 )
 
-// ProbeVolumePlugin is the entry point for plugin detection in a package
+// ProbeVolumePlugin is the entry point for plugin detection in a package.
 func ProbeVolumePlugins() []volume.Plugin {
 	return []volume.Plugin{&secretPlugin{}}
 }
@@ -21,7 +21,7 @@ const (
 	secretPluginName = "kubernetes.io/secret"
 )
 
-// secretPlugin implements the VolumePlugin interface
+// secretPlugin implements the VolumePlugin interface.
 type secretPlugin struct {
 	host volume.Host
 }
@@ -58,6 +58,8 @@ func (plugin *secretPlugin) newCleanerInternal(volName string, podUID types.UID)
 	return &secretVolume{volName, podUID, plugin, nil}, nil
 }
 
+// secretVolume handles retrieving secrets from the API server
+// and placing them into the volume on the host.
 type secretVolume struct {
 	volName   string
 	podUID    types.UID
@@ -66,7 +68,9 @@ type secretVolume struct {
 }
 
 func (sv *secretVolume) SetUp() error {
+	// TODO: explore tmpfs for secret volumes
 	hostPath := sv.GetPath()
+	glog.V(3).Infof("Setting up volume %v for pod %v at %v", sv.volName, sv.podUID, hostPath)
 	err := os.MkdirAll(hostPath, 0750)
 	if err != nil {
 		return err
@@ -99,6 +103,7 @@ func (sv *secretVolume) GetPath() string {
 }
 
 func (sv *secretVolume) TearDown() error {
+	glog.V(3).Infof("Tearing down volume %v for pod %v at %v", sv.volName, sv.podUID, sv.GetPath())
 	tmpDir, err := volume.RenameDirectory(sv.GetPath(), sv.volName+".deleting~")
 	if err != nil {
 		return err
