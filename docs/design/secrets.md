@@ -43,8 +43,9 @@ access secrets. Secrets should be placed where the container expects them to be.
 
 Many configuration files contain secrets intermixed with other configuration information.  For
 example, a user's application may contain a properties file than contains database credentials,
-SaaS API tokens, etc.  Users should be able to consume configuration artifacts in their containers and
-be able to control the path on the container's filesystems where the artifact will be presented.
+SaaS API tokens, etc.  Users should be able to consume configuration artifacts in their containers
+and be able to control the path on the container's filesystems where the artifact will be
+presented.
 
 ### Use-Case: Metadata about services
 
@@ -79,7 +80,7 @@ We should consider what the best way to allow this is; there are a few different
 For our initial work, we will treat all secrets as files to narrow the problem space.  There will
 be a future proposal that handles exposing secrets as environment variables.
 
-## Flow analysis of secret data
+## Flow analysis of secret data with respect to the API server
 
 There are two fundamentally different use-cases for access to secrets:
 
@@ -91,19 +92,41 @@ There are two fundamentally different use-cases for access to secrets:
 In use cases for CRUD operations, the user experience for secrets should be no different than for
 other API resources.
 
-TODO: document possible relation with Service Accounts
+TODO: Document relation with:
+
+1.  [Service Accounts](https://github.com/GoogleCloudPlatform/kubernetes/pull/2297)
+2.  [Security Contexts](https://github.com/GoogleCloudPlatform/kubernetes/pull/3910)
+
+#### Data store backing the REST API
+
+The data store backing the REST API should be pluggable because different cluster operators will
+have different preferences for the central store of secret data.  Some possibilities for storage:
+
+1.  An etcd collection alongside the storage for other API resources
+2.  A collocated [HSM](http://en.wikipedia.org/wiki/Hardware_security_module)
+3.  An external datastore such as an external etcd, RDBMS, etc.
 
 ### Use-Case: Kubelet read of secrets for node
 
 The use-case where the kubelet reads secrets has several additional requirements:
 
-1.  Kubelets should only receive secret data which is required by pods scheduled onto the kubelet's
-    node
+1.  Kubelets should only be able to receive secret data which is required by pods scheduled onto
+    the kubelet's node
 2.  Kubelets should have read-only access to secret data
 3.  Secret data should not be transmitted over the wire insecurely
 4.  Kubelets must ensure pods do not have access to each other's secrets
 
-TODO: describe further; what are the interface / watch implications?
+#### Secret data on the node
+
+Consideration must be given to whether secret data should be allowed to be at rest on the node:
+
+1.  If secret data is not allowed to be at rest, the size of secret data becomes another draw on the
+    node's RAM - should it affect scheduling?
+2.  If secret data is allowed to be a rest, should it be encrypted?
+    1.  If so, how should be this be done?
+    2.  If not, what threats exist?  What types of secret are appropriate to store this way?
+
+TODO: expand
 
 ## Community work:
 
