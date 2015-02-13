@@ -106,6 +106,21 @@ have different preferences for the central store of secret data.  Some possibili
 2.  A collocated [HSM](http://en.wikipedia.org/wiki/Hardware_security_module)
 3.  An external datastore such as an external etcd, RDBMS, etc.
 
+#### Size limit for secrets
+
+There should be a size limit for secrets in order to:
+
+1.  Prevent DOS attacks against the API server
+2.  Allow kubelet implementations that prevent secret data from touching the node's filesystem
+
+The size limit should satisfy the following conditions:
+
+1.  Large enough to store common artifact types (encryption keypairs, certificates, small
+    configuration files)
+2.  Small enough to avoid large impact on node resource consumption (storage, RAM for tmpfs, etc)
+
+To begin discussion, we propose an initial value for this size limit of **1MB**.
+
 ### Use-Case: Kubelet read of secrets for node
 
 The use-case where the kubelet reads secrets has several additional requirements:
@@ -130,7 +145,7 @@ TODO: expand
 
 ## Community work:
 
-There are several proposals / upstream patches that we should consider:
+Several proposals / upstream patches are notable as background for this proposal:
 
 1.  [Docker vault proposal](https://github.com/docker/docker/issues/10310)
 2.  [Specification for image/container standardization based on volumes](https://github.com/docker/docker/issues/9277)
@@ -138,26 +153,16 @@ There are several proposals / upstream patches that we should consider:
 4.  [Secret proposal for docker](https://github.com/docker/docker/pull/6075)
 5.  [Continuating of secret proposal for docker](https://github.com/docker/docker/pull/6697)
 
-## Analysis TODOs
-
-Collecting remaining TODOs here:
-
-1.  Determine how/whether secrets interact with service accounts; are namespaces enough for the
-    security scope?
-2.  Can/should my security context affect what secrets I have access to?
-3.  Should there be a way to express that a container which consumes a secret should be restarted
-    when the secret changes?
-
 ## Proposed Design
 
-### Overview
+We propose a new `Secret` resource which is mounted into containers with a new volume type. Secret
+volumes will be handled by a volume plugin that does the actual work of fetching the secret and
+storing it. Secrets contain multiple pieces of data that are presented as different files within
+the secret volume (example: SSH key pair). 
 
-This design proposes a new `Secret` resource which is mounted into containers with a new volume
-type. The secrets volume will be backed by a volume plugin that does the actual work of fetching
-the secret and placing it on the filesystem to be mounted in the container. Secrets may consist
-of multiple files. For example, an SSH key pair. In order to remove the burden from the end user
-in specifying every file that a secret consists of, it should be possible to mount all files
-provided by a secret with a single ```VolumeMount``` entry in the container specification.
+In order to remove the burden from the end user in specifying every file that a secret consists of,
+it should be possible to mount all files provided by a secret with a single ```VolumeMount``` entry
+in the container specification.
 
 ### Secret API Resource
 
@@ -172,7 +177,11 @@ type Secret struct {
     // presented to a container for this secret data.
     Data map[string][]byte
 }
+
+const MaxSecretSize = 1 * 1024 * 1024
 ```
+
+Secrets are validated against `MaxSecretSize`.
 
 A new REST API and registry interface will be added to accompany the `Secret` resource.  The
 default implementation of the registry will store `Secret` information in etcd.  Future registry
