@@ -1328,6 +1328,8 @@ type Secret struct {
 	Data map[string][]byte `json:"data,omitempty"`
 }
 
+const MaxSecretSize = 1 * 1024 * 1024
+
 type SecretList struct {
 	TypeMeta `json:",inline"`
 	ListMeta `json:"metadata,omitempty"`

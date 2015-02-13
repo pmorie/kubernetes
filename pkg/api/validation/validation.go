@@ -249,7 +249,7 @@ func validateSource(source *api.VolumeSource) errs.ValidationErrorList {
 	}
 	if source.Secret != nil {
 		numVolumes++
-		// TODO: validate secret volume
+		allErrs = append(allErrs, validateSecretSource(source.Secret).Prefix("secret")...)
 	}
 	if numVolumes != 1 {
 		allErrs = append(allErrs, errs.NewFieldInvalid("", source, "exactly 1 volume type is required"))
@@ -283,6 +283,20 @@ func validateGCEPersistentDisk(PD *api.GCEPersistentDisk) errs.ValidationErrorLi
 	}
 	if PD.Partition < 0 || PD.Partition > 255 {
 		allErrs = append(allErrs, errs.NewFieldInvalid("partition", PD.Partition, pdPartitionErrorMsg))
+	}
+	return allErrs
+}
+
+func validateSecretSource(secretSource *api.SecretSource) errs.ValidationErrorList {
+	allErrs := errs.ValidationErrorList{}
+	if secretSource.Target.Name == "" {
+		allErrs = append(allErrs, errs.NewFieldRequired("target.name", ""))
+	}
+	if secretSource.Target.Namespace == "" {
+		allErrs = append(allErrs, errs.NewFieldRequired("target.namespace", ""))
+	}
+	if secretSource.Target.Kind != "Secret" {
+		allErrs = append(allErrs, errs.NewFieldInvalid("target.Kind", secretSource.Target.Kind, "Secret"))
 	}
 	return allErrs
 }
@@ -818,6 +832,15 @@ func ValidateSecret(secret *api.Secret) errs.ValidationErrorList {
 	} else if !util.IsDNSSubdomain(secret.Namespace) {
 		allErrs = append(allErrs, errs.NewFieldInvalid("namespace", secret.Namespace, ""))
 	}
+
+	totalSize := 0
+	for _, value := range secret.Data {
+		totalSize += len(value)
+	}
+	if totalSize > api.MaxSecretSize {
+		allErrs = append(allErrs, errs.NewFieldForbidden("data", "Maximum secret size exceeded"))
+	}
+
 	return allErrs
 }
 
