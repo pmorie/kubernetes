@@ -17,3 +17,8 @@
 function detect-master () {
   echo "Running locally"
 }
+
+# Perform preparations required to run e2e tests
+function prepare-e2e() {
+  echo "prepare-e2e"
+}

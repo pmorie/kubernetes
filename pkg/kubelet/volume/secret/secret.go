@@ -87,7 +87,7 @@ func (sv *secretVolume) SetUp() error {
 	// TODO: explore tmpfs for secret volumes
 	hostPath := sv.GetPath()
 	glog.V(3).Infof("Setting up volume %v for pod %v at %v", sv.volName, sv.podUID, hostPath)
-	err := os.MkdirAll(hostPath, 0750)
+	err := os.MkdirAll(hostPath, 0777)
 	if err != nil {
 		return err
 	}
@@ -105,7 +105,7 @@ func (sv *secretVolume) SetUp() error {
 
 	for name, data := range secret.Data {
 		hostFilePath := path.Join(hostPath, name)
-		err := ioutil.WriteFile(hostFilePath, data, 0644)
+		err := ioutil.WriteFile(hostFilePath, data, 0777)
 		if err != nil {
 			return err
 		}
