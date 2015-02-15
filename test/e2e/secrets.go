@@ -38,15 +38,8 @@ var _ = Describe("Secrets", func() {
 	})
 
 	It("should be consumable from pods", func() {
-		// if testContext.provider == "vagrant" {
-		// 	By("Skipping test which is broken for vagrant (See https://github.com/GoogleCloudPlatform/kubernetes/issues/3580)")
-		// 	return
-		// }
-
 		ns := api.NamespaceDefault
-		// TODO(satnam6502): Replace call of randomSuffix with call to NewUUID when service
-		//                   names have the same form as pod and replication controller names.
-		name := "secrettest-" + randomSuffix()
+		name := "secret-test-" + string(util.NewUUID())
 		volumeName := "secret-volume"
 		volumeMountPath := "/etc/secret-volume"
 
@@ -154,7 +147,7 @@ var _ = Describe("Secrets", func() {
 		}
 
 		for _, m := range toFind {
-			Expect(string(logs)).To(ContainSubstring(m), "%q in client env vars", m)
+			Expect(string(logs)).To(ContainSubstring(m), "%q in secret data", m)
 		}
 
 		// We could try a wget the service from the client pod.  But services.sh e2e test covers that pretty well.
