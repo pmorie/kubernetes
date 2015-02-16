@@ -23,6 +23,7 @@ access secrets. Secrets should be placed where the container expects them to be.
    *  If a node is compromised, only the secrets for the containers scheduled on it should be
       exposed
    *  If the master is compromised, all secrets in the cluster may be exposed
+*  Secret rotation is an orthogonal concern, but it should be facilitated by this proposal
 
 ## Use Cases
 
@@ -44,6 +45,8 @@ access secrets. Secrets should be placed where the container expects them to be.
     1.  Use credentials for a docker registry to pull the pod's docker image
     2.  Present kubernetes auth token to the pod or transparently decorate traffic between the pod
         and master service
+4.  As a user, I want to be able to indicate that a secret expires and for that secret's value to
+    be rotated once it expires, so that the system can help me follow good practices
 
 ### Use-Case: Configuration artifacts
 
@@ -65,8 +68,8 @@ service would also consume the secrets associated with the MySQL service.
 [Service Accounts](https://github.com/GoogleCloudPlatform/kubernetes/pull/2297) are proposed as a
 mechanism to decouple capabilities and security contexts from individual human users.  A
 `ServiceAccount` contains references to some number of secrets.  A `Pod` can specify that it is
-associated with a `ServiceAccount`.  When a pod is associated with a service account the Kubelet
-may take action based on the type of secrets the service account consumes.
+associated with a `ServiceAccount`.  Secrets should have a `Type` field to allow the Kubelet and
+other system components to take action based on the secret's type.
 
 #### Example: service account consumes auth token secret
 
@@ -84,6 +87,12 @@ which consumes this type of secret, the Kubelet may take a number of actions:
 
 Another example use case is where a pod is associated with a secret containing docker registry
 credentials.  The Kubelet could use these credentials for the docker pull to retrieve the image.
+
+### Use-Case: Secret expiry and rotation
+
+Rotation is considered a good practice for many types of secret data.  It should be possible to
+express that a secret has an expiry date; this would make it possible to implement a system
+component that could regenerate expired secrets.
 
 ## Deferral: Consuming secrets as environment variables
 
