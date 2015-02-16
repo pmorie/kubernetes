@@ -271,6 +271,9 @@ type SecretSource struct {
 }
 ```
 
+Secret volume sources are validated to ensure that the specified object reference actually points
+to an object of type `Secret`.
+
 ### Secret Volume Plugin
 
 A new Kubelet volume plugin will be added to handle volumes with a secret source.  This plugin will
@@ -301,3 +304,183 @@ For use-cases where the Kubelet's behavior is affected by the secrets associated
 `ServiceAccount`, the Kubelet will need to be changed.  For example, if secrets of type
 `docker-reg-auth` affect how the pod's images are pulled, the Kubelet will need to be changed
 to accomodate this.  Subsequent proposals can address this on a type-by-type basis.
+
+## Examples
+
+For clarity, let's examine some detailed examples of some common use-cases in terms of the
+suggested changes.  All of these examples are assumed to be created in a namespace called
+`example`.
+
+### Use-Case: Pod with ssh keys
+
+To create a pod that uses an ssh key stored as a secret, we first need to create a secret:
+
+```json
+{
+  "apiVersion": "v1beta2",
+  "kind": "Secret",
+  "id": "ssh-key-secret",
+  "data": {
+    "id_rsa.pub": "dmFsdWUtMQ==",
+    "id_rsa": "dmFsdWUtMg=="
+  }
+}
+```
+
+**Note:** The values of secret data are encoded as base64-encoded strings.
+
+Now we can create a pod which references the secret with the ssh key and consumes it in a volume:
+
+```json
+{
+  "id": "secret-test-pod",
+  "kind": "Pod",
+  "apiVersion":"v1beta2",
+  "labels": {
+    "name": "secret-test"
+  },
+  "desiredState": {
+    "manifest": {
+      "version": "v1beta1",
+      "id": "secret-test-pod",
+      "containers": [{
+        "name": "ssh-test-container",
+        "image": "mySshImage",
+        "volumeMounts": [{
+          "name": "secret-volume",
+          "mountPath": "/etc/secret-volume",
+          "readOnly": true
+        }]
+      }],
+      "volumes": [{
+        "name": "secret-volume",
+        "source": {
+          "secret": {
+            "target": {
+              "kind": "Secret",
+              "namespace": "example",
+              "name": "ssh-key-secret"
+            }
+          }
+        }
+      }]
+    }
+  }
+}
+```
+
+When the container's command runs, the pieces of the key will be available in:
+
+    /etc/secret-volume/id_rsa.pub
+    /etc/secret-volume/id_rsa
+
+The container is then free to use the secret data to establish an ssh connection.
+
+### Use-Case: Pods with pod / test credentials
+
+Let's compare examples where a pod consumes a secret containing prod credentials and another pod
+consumes a secret with test environment credentials.
+
+The secrets:
+
+```json
+[{
+  "apiVersion": "v1beta2",
+  "kind": "Secret",
+  "id": "prod-db-secret",
+  "data": {
+    "username": "dmFsdWUtMQ==",
+    "password": "dmFsdWUtMg=="
+  }
+},
+{
+  "apiVersion": "v1beta2",
+  "kind": "Secret",
+  "id": "test-db-secret",
+  "data": {
+    "username": "dmFsdWUtMQ==",
+    "password": "dmFsdWUtMg=="
+  }
+}]
+```
+
+The pods:
+
+```json
+[{
+  "id": "prod-db-client-pod",
+  "kind": "Pod",
+  "apiVersion":"v1beta2",
+  "labels": {
+    "name": "prod-db-client"
+  },
+  "desiredState": {
+    "manifest": {
+      "version": "v1beta1",
+      "id": "prod-db-pod",
+      "containers": [{
+        "name": "db-client-container",
+        "image": "myClientImage",
+        "volumeMounts": [{
+          "name": "secret-volume",
+          "mountPath": "/etc/secret-volume",
+          "readOnly": true
+        }]
+      }],
+      "volumes": [{
+        "name": "secret-volume",
+        "source": {
+          "secret": {
+            "target": {
+              "kind": "Secret",
+              "namespace": "example",
+              "name": "prod-db-secret"
+            }
+          }
+        }
+      }]
+    }
+  }
+},
+{
+  "id": "test-db-client-pod",
+  "kind": "Pod",
+  "apiVersion":"v1beta2",
+  "labels": {
+    "name": "test-db-client"
+  },
+  "desiredState": {
+    "manifest": {
+      "version": "v1beta1",
+      "id": "test-db-pod",
+      "containers": [{
+        "name": "db-client-container",
+        "image": "myClientImage",
+        "volumeMounts": [{
+          "name": "secret-volume",
+          "mountPath": "/etc/secret-volume",
+          "readOnly": true
+        }]
+      }],
+      "volumes": [{
+        "name": "secret-volume",
+        "source": {
+          "secret": {
+            "target": {
+              "kind": "Secret",
+              "namespace": "example",
+              "name": "test-db-secret"
+            }
+          }
+        }
+      }]
+    }
+  }
+}]
+```
+
+The specs for the two pods differ only in the value of the object referred to by the secret volume
+source.  Both containers will have the following files present on their filesystems:
+
+    /etc/secret-volume/username
+    /etc/secret-volume/password
