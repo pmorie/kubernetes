@@ -123,11 +123,6 @@ There are two fundamentally different use-cases for access to secrets:
 In use cases for CRUD operations, the user experience for secrets should be no different than for
 other API resources.
 
-TODO: Document relation with:
-
-1.  [Service Accounts](https://github.com/GoogleCloudPlatform/kubernetes/pull/2297)
-2.  [Security Contexts](https://github.com/GoogleCloudPlatform/kubernetes/pull/3910)
-
 #### Data store backing the REST API
 
 The data store backing the REST API should be pluggable because different cluster operators will
@@ -168,17 +163,27 @@ The Kubelet should only be allowed to read secrets which are consumed by pods sc
 Kubelet's node and their associated service accounts.  Authorization of the Kubelet to read this
 data would be delegated to an authorization plugin and associated policy rule.
 
-#### Secret data on the node
+#### Secret data on the node: data at rest
 
 Consideration must be given to whether secret data should be allowed to be at rest on the node:
 
-1.  If secret data is not allowed to be at rest, the size of secret data becomes another draw on the
-    node's RAM - should it affect scheduling?
+1.  If secret data is not allowed to be at rest, the size of secret data becomes another draw on
+    the node's RAM - should it affect scheduling?
 2.  If secret data is allowed to be a rest, should it be encrypted?
     1.  If so, how should be this be done?
     2.  If not, what threats exist?  What types of secret are appropriate to store this way?
 
-TODO: expand
+For the sake of limiting complexity, we propose that initially secret data should not be allowed
+to be at rest on a node; secret data should be stored on a node-level tmpfs filesystem.  This
+filesystem can be subdivided into directories for use by the kubelet and by the volume plugin.
+
+#### Secret data on the node: isolation
+
+Every pod will have a [security context](https://github.com/GoogleCloudPlatform/kubernetes/pull/3910).
+Secret data on the node should be isolated according to the security context of the container.  The
+Kubelet volume plugin API will be changed so that a volume plugin receives the security context of
+a volume along with the volume spec.  This will allow volume plugins to implement setting the
+security context of volumes they manage.
 
 ## Community work:
 
@@ -187,8 +192,8 @@ Several proposals / upstream patches are notable as background for this proposal
 1.  [Docker vault proposal](https://github.com/docker/docker/issues/10310)
 2.  [Specification for image/container standardization based on volumes](https://github.com/docker/docker/issues/9277)
 3.  [Kubernetes service account proposal](https://github.com/GoogleCloudPlatform/kubernetes/pull/2297)
-4.  [Secret proposal for docker](https://github.com/docker/docker/pull/6075)
-5.  [Continuating of secret proposal for docker](https://github.com/docker/docker/pull/6697)
+4.  [Secrets proposal for docker (1)](https://github.com/docker/docker/pull/6075)
+5.  [Secrets proposal for docker (2)](https://github.com/docker/docker/pull/6697)
 
 ## Proposed Design
 
@@ -228,9 +233,8 @@ const (
 const MaxSecretSize = 1 * 1024 * 1024
 ```
 
-A Secret can declare a type in order to provide type information to system components that handle
-exposing secrets to pods.  The default type is `opaque`, which represents arbitrary user-owned
-data.
+A Secret can declare a type in order to provide type information to system components that work
+with secrets.  The default type is `opaque`, which represents arbitrary user-owned data.
 
 Secrets are validated against `MaxSecretSize`.
 
@@ -260,18 +264,24 @@ type SecretSource struct {
 
 ### Secret Volume Plugin
 
-The secret volume plugin would implement the actual retrieval and laying down of secrets on the
-Kubelet's file system. Secrets may be stored in a special secret registry, as Docker volumes, LDAP
-etc. See [Issue #2030](https://github.com/GoogleCloudPlatform/kubernetes/issues/2030) for options.
-The implementation of this plugin is outside of the scope of this proposal. A default Etcd-based
-version will be provided out of the box, but different solutions may be appropriate based on
-specific user use-cases.
+A new Kubelet volume plugin will be added to handle volumes with a secret source.  This plugin will
+require access to the API server to retrieve secret data and therefore the volume `Host` interface
+will have to change to expose a client interface:
 
-### Security Concerns
+```go
+type Host interface {
+    // Other methods omitted
 
-This proposal requires that secrets be placed on a filesystem location that is accessible to the
-container requiring the secret. This makes it vulnerable to attacks on the container and the node,
-especially if the secret is placed in plain text. MCS labels can mitigate some of this risk.
-If there is a particular use case for a very sensitive secret, the secret itself could be
-stored encrypted and placed in encrypted form in the file system for the container. The container
-would have to know how to decrypt it and would receive the decryption key via another channel.
+    // GetKubeClient returns a client interface
+    GetKubeClient() client.Interface
+}
+```
+
+The secret volume plugin will be responsible for:
+
+1.  Returning a `volume.Builder` implementation from `NewBuilder` that:
+    1.  Retrieves the secret data for the volume from the API server
+    2.  Places the secret data onto the container's filesystem
+    3.  Sets the correct security attributes for the volume based on the pod's `SecurityContext`
+2.  Returning a `volume.Cleaner` implementation from `NewClear` that cleans the volume from the
+    container's filesystem
