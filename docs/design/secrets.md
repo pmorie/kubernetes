@@ -2,8 +2,8 @@
 
 ## Abstract
 
-A proposal for the distribution of secrets (passwords, keys, etc) to containers inside Kubernetes
-using a custom volume type.
+A proposal for the distribution of secrets (passwords, keys, etc) to the Kubelet and to
+containers inside Kubernetes using a custom volume type.
 
 ## Motivation
 
@@ -235,7 +235,7 @@ type SecretType string
 const (
     SecretTypeOpaque              SecretType = "opaque"           // Opaque (arbitrary data; default)
     SecretTypeKubernetesAuthToken SecretType = "kubernetes-auth"  // Kubernetes auth token
-    SecretTypeKerberosKeytab      SecretType = "kerberos-keytab"  // Kerberos keytab
+    SecretTypeDockerRegistryAuth  SecretType = "docker-reg-auth"  // Docker registry auth
     // FUTURE: other type values
 )
 
@@ -294,3 +294,10 @@ The secret volume plugin will be responsible for:
     3.  Sets the correct security attributes for the volume based on the pod's `SecurityContext`
 2.  Returning a `volume.Cleaner` implementation from `NewClear` that cleans the volume from the
     container's filesystem
+
+### Changes to the Kubelet
+
+For use-cases where the Kubelet's behavior is affected by the secrets associated with a pod's
+`ServiceAccount`, the Kubelet will need to be changed.  For example, if secrets of type
+`docker-reg-auth` affect how the pod's images are pulled, the Kubelet will need to be changed
+to accomodate this.  Subsequent proposals can address this on a type-by-type basis.
