@@ -38,6 +38,12 @@ access secrets. Secrets should be placed where the container expects them to be.
 2.  As a user, I want to allow containers to consume supplemental information about services such
     as username and password which should be kept secret, so that I can share secrets about a
     service amongst the containers in my application securely
+3.  As a user, I want to associate a pod with a `ServiceAccount` that consumes a secret and have
+    the kubelet implement some reserved behaviors based on the types of secrets the service account
+    consumes:
+    1.  Use credentials for a docker registry to pull the pod's docker image
+    2.  Present kubernetes auth token to the pod or transparently decorate traffic between the pod
+        and master service
 
 ### Use-Case: Configuration artifacts
 
@@ -53,6 +59,31 @@ Most pieces of information about how to use a service are secrets.  For example,
 provides a MySQL database needs to provide the username, password, and database name to consumers
 so that they can authenticate and use the correct database. Containers in pods consuming the MySQL
 service would also consume the secrets associated with the MySQL service.
+
+### Use-Case: Secrets associated with service accounts
+
+[Service Accounts](https://github.com/GoogleCloudPlatform/kubernetes/pull/2297) are proposed as a
+mechanism to decouple capabilities and security contexts from individual human users.  A
+`ServiceAccount` contains references to some number of secrets.  A `Pod` can specify that it is
+associated with a `ServiceAccount`.  When a pod is associated with a service account the Kubelet
+may take action based on the type of secrets the service account consumes.
+
+#### Example: service account consumes auth token secret
+
+As an example, the service account proposal discusses service accounts consuming secrets which
+contain kubernetes auth tokens.  When a Kubelet starts a pod associates with a service account
+which consumes this type of secret, the Kubelet may take a number of actions:
+
+1.  Expose the secret in a `.kubernetes_auth` file in a well-known location in the container's
+    file system
+2.  Configure that node's `kube-proxy` to decorate HTTP requests from that pod to the 
+    `kubernetes-master` service with the auth token, e. g. by adding a header to the request
+    (see the [LOAS Daemon](https://github.com/GoogleCloudPlatform/kubernetes/issues/2209) proposal)
+
+#### Example: service account consumes docker registry credentials
+
+Another example use case is where a pod is associated with a secret containing docker registry
+credentials.  The Kubelet could use these credentials for the docker pull to retrieve the image.
 
 ## Deferral: Consuming secrets as environment variables
 
@@ -131,6 +162,12 @@ The use-case where the kubelet reads secrets has several additional requirements
 3.  Secret data should not be transmitted over the wire insecurely
 4.  Kubelets must ensure pods do not have access to each other's secrets
 
+#### Read of secret data by the Kubelet
+
+The Kubelet should only be allowed to read secrets which are consumed by pods scheduled onto that
+Kubelet's node and their associated service accounts.  Authorization of the Kubelet to read this
+data would be delegated to an authorization plugin and associated policy rule.
+
 #### Secret data on the node
 
 Consideration must be given to whether secret data should be allowed to be at rest on the node:
@@ -158,7 +195,7 @@ Several proposals / upstream patches are notable as background for this proposal
 We propose a new `Secret` resource which is mounted into containers with a new volume type. Secret
 volumes will be handled by a volume plugin that does the actual work of fetching the secret and
 storing it. Secrets contain multiple pieces of data that are presented as different files within
-the secret volume (example: SSH key pair). 
+the secret volume (example: SSH key pair).
 
 In order to remove the burden from the end user in specifying every file that a secret consists of,
 it should be possible to mount all files provided by a secret with a single ```VolumeMount``` entry
@@ -176,10 +213,24 @@ type Secret struct {
     // Keys in this map are the paths relative to the volume
     // presented to a container for this secret data.
     Data map[string][]byte
+    Type SecretType
 }
+
+type SecretType string
+
+const (
+    SecretTypeOpaque              SecretType = "opaque"           // Opaque (arbitrary data; default)
+    SecretTypeKubernetesAuthToken SecretType = "kubernetes-auth"  // Kubernetes auth token
+    SecretTypeKerberosKeytab      SecretType = "kerberos-keytab"  // Kerberos keytab
+    // FUTURE: other type values
+)
 
 const MaxSecretSize = 1 * 1024 * 1024
 ```
+
+A Secret can declare a type in order to provide type information to system components that handle
+exposing secrets to pods.  The default type is `opaque`, which represents arbitrary user-owned
+data.
 
 Secrets are validated against `MaxSecretSize`.
 

@@ -107,6 +107,7 @@ func (sv *secretVolume) SetUp() error {
 		hostFilePath := path.Join(hostPath, name)
 		err := ioutil.WriteFile(hostFilePath, data, 0777)
 		if err != nil {
+			glog.Errorf("Error writing secret data to host path: %v, %v", hostFilePath, err)
 			return err
 		}
 	}
