@@ -8,10 +8,15 @@ containers inside Kubernetes using a custom volume type.
 ## Motivation
 
 Secrets are needed in containers to access internal resources like the Kubernetes master or
-external resources such as git repositories, databases, etc. 
+external resources such as git repositories, databases, etc.  Users may also want behaviors in the
+kubelet that depend on secret data (credentials for image pull from a docker registry) associated
+with pods.
 
-A goal of this design is to eliminate or minimize the modifications to containers in order to
-access secrets. Secrets should be placed where the container expects them to be.
+Goals of this design:
+
+1.  Describe a secret resource
+2.  Define the various challenges attendant to managing secrets on the node
+3.  Define a mechanism for consuming secrets in containers without modification
 
 ## Constraints and Assumptions
 
@@ -20,8 +25,8 @@ access secrets. Secrets should be placed where the container expects them to be.
 *  Encryption of secret data and node security are orthogonal concerns
 *  It is assumed that node and master are secure and that compromising their security could also
    compromise secrets:
-   *  If a node is compromised, only the secrets for the containers scheduled on it should be
-      exposed
+   *  If a node is compromised, the only secrets that could potentially be exposed should be the
+      secrets belonging to containers scheduled onto it
    *  If the master is compromised, all secrets in the cluster may be exposed
 *  Secret rotation is an orthogonal concern, but it should be facilitated by this proposal
 
