@@ -74,7 +74,7 @@ other system components to take action based on the secret's type.
 #### Example: service account consumes auth token secret
 
 As an example, the service account proposal discusses service accounts consuming secrets which
-contain kubernetes auth tokens.  When a Kubelet starts a pod associates with a service account
+contain kubernetes auth tokens.  When a Kubelet starts a pod associated with a service account
 which consumes this type of secret, the Kubelet may take a number of actions:
 
 1.  Expose the secret in a `.kubernetes_auth` file in a well-known location in the container's
@@ -92,7 +92,9 @@ credentials.  The Kubelet could use these credentials for the docker pull to ret
 
 Rotation is considered a good practice for many types of secret data.  It should be possible to
 express that a secret has an expiry date; this would make it possible to implement a system
-component that could regenerate expired secrets.
+component that could regenerate expired secrets.  As an example, consider a component that rotates
+expired secrets.  The rotator could periodically regenerate the values for expired secrets of
+common types and update their expiry dates.
 
 ## Deferral: Consuming secrets as environment variables
 
@@ -178,13 +180,28 @@ Consideration must be given to whether secret data should be allowed to be at re
 
 1.  If secret data is not allowed to be at rest, the size of secret data becomes another draw on
     the node's RAM - should it affect scheduling?
-2.  If secret data is allowed to be a rest, should it be encrypted?
+2.  If secret data is allowed to be at rest, should it be encrypted?
     1.  If so, how should be this be done?
     2.  If not, what threats exist?  What types of secret are appropriate to store this way?
 
 For the sake of limiting complexity, we propose that initially secret data should not be allowed
 to be at rest on a node; secret data should be stored on a node-level tmpfs filesystem.  This
 filesystem can be subdivided into directories for use by the kubelet and by the volume plugin.
+
+#### Secret data on the node: resource consumption
+
+The Kubelet will be responsible for creating the per-node tmpfs file system for secret storage.
+It is hard to make a prescriptive declaration about how much storage is appropriate to reserve for
+secrets because different installations will vary widely in available resources, desired pod to
+node density, overcommit policy, and other operation dimensions.  That being the case, we propose
+for simplicity that the amount of secret storage be controlled by a new parameter to the kubelet
+with a default value of **64MB**.  It is the cluster operator's responsibility to handle choosing
+the right storage size for their installation and configuring their Kubelets correctly.
+
+Configuring each Kubelet is not the ideal story for operator experience; it is more intuitive that
+the cluster-wide storage size be readable from a central configuration store like the one proposed
+in [#1553](https://github.com/GoogleCloudPlatform/kubernetes/issues/1553).  When such a store
+exists, the Kubelet could be modified to read this configuration item from the store.
 
 #### Secret data on the node: isolation
 
@@ -298,7 +315,17 @@ The secret volume plugin will be responsible for:
 2.  Returning a `volume.Cleaner` implementation from `NewClear` that cleans the volume from the
     container's filesystem
 
-### Changes to the Kubelet
+### Kubelet: Node-level secret storage
+
+The Kubelet must be modified to accept a new parameter for the secret storage size and to create
+a tmpfs file system of that size to store secret data.  Rough accounting of specific changes:
+
+1.  The Kubelet should have a new field added called `secretStorageSize`; units are megabytes
+2.  `NewMainKubelet` should accept a value for secret storage size
+3.  The Kubelet server should have a new flag added for secret storage size
+4.  The Kubelet's `setupDataDirs` method should be changed to create the secret storage
+
+### Kubelet: New behaviors for secrets associated with service accounts
 
 For use-cases where the Kubelet's behavior is affected by the secrets associated with a pod's
 `ServiceAccount`, the Kubelet will need to be changed.  For example, if secrets of type
@@ -321,8 +348,8 @@ To create a pod that uses an ssh key stored as a secret, we first need to create
   "kind": "Secret",
   "id": "ssh-key-secret",
   "data": {
-    "id_rsa.pub": "dmFsdWUtMQ==",
-    "id_rsa": "dmFsdWUtMg=="
+    "id_rsa.pub": "dmFsdWUtMQ0K",
+    "id_rsa": "dmFsdWUtMg0KDQo="
   }
 }
 ```
@@ -389,8 +416,8 @@ The secrets:
   "kind": "Secret",
   "id": "prod-db-secret",
   "data": {
-    "username": "dmFsdWUtMQ==",
-    "password": "dmFsdWUtMg=="
+    "username": "dmFsdWUtMQ0K",
+    "password": "dmFsdWUtMg0KDQo="
   }
 },
 {
@@ -398,8 +425,8 @@ The secrets:
   "kind": "Secret",
   "id": "test-db-secret",
   "data": {
-    "username": "dmFsdWUtMQ==",
-    "password": "dmFsdWUtMg=="
+    "username": "dmFsdWUtMQ0K",
+    "password": "dmFsdWUtMg0KDQo="
   }
 }]
 ```
