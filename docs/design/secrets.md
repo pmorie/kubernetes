@@ -163,6 +163,25 @@ The size limit should satisfy the following conditions:
 
 To begin discussion, we propose an initial value for this size limit of **1MB**.
 
+#### Other limitations on secrets
+
+Defining a policy for limitations on how a secret may be referenced by another API resource and how
+constraints should be applied throughout the cluster is tricky due to the number of variables
+involved:
+
+1.  Should there be a maximum number of secrets a pod can reference via a volume?
+2.  Should there be a maximum number of secrets a service account can reference?
+3.  Should there be a total maximum number of secrets a pod can reference via its own spec and its
+    associated service account?
+4.  Should there be a total size limit on the amount of secret data consumed by a pod?
+5.  How will cluster operators want to be able to configure these limits?
+6.  How will these limits impact API server validations?
+7.  How will these limits affect scheduling?
+
+For now, we will not implement validations around these limits.  Cluster operators will decide how
+much node storage is allocated to secrets. It will be the operator's responsibility to ensure that
+the allocated storage is sufficient for the workload scheduled onto a node.
+
 ### Use-Case: Kubelet read of secrets for node
 
 The use-case where the kubelet reads secrets has several additional requirements:
@@ -207,6 +226,11 @@ Configuring each Kubelet is not the ideal story for operator experience; it is m
 the cluster-wide storage size be readable from a central configuration store like the one proposed
 in [#1553](https://github.com/GoogleCloudPlatform/kubernetes/issues/1553).  When such a store
 exists, the Kubelet could be modified to read this configuration item from the store.
+
+When the Kubelet is modified to advertise node resources (as proposed in
+[#4441](https://github.com/GoogleCloudPlatform/kubernetes/issues/4441)), the capacity calculation
+for available memory should factor in the potential size of the node-level tmpfs in order to avoid
+memory overcommit on the node.
 
 #### Secret data on the node: isolation
 
@@ -274,6 +298,12 @@ default implementation of the registry will store `Secret` information in etcd. 
 implementations could store the `TypeMeta` and `ObjectMeta` fields in etcd and store the secret
 data in another data store entirely, or store the whole object in another data store.
 
+#### Other validations related to secrets
+
+Initially there will be no validations for the number of secrets a pod references, or the number of
+secrets that can be associated with a service account.  These may be added in the future as the
+finer points of secrets and resource allocation are fleshed out.
+
 ### Secret Volume Source
 
 A new `SecretSource` type of volume source will be added to the ```VolumeSource``` struct in the
@@ -288,7 +318,6 @@ type VolumeSource struct {
 }
 
 type SecretSource struct {
-
     Target ObjectReference
 }
 ```
