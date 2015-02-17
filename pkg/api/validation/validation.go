@@ -296,7 +296,7 @@ func validateSecretSource(secretSource *api.SecretSource) errs.ValidationErrorLi
 		allErrs = append(allErrs, errs.NewFieldRequired("target.namespace", ""))
 	}
 	if secretSource.Target.Kind != "Secret" {
-		allErrs = append(allErrs, errs.NewFieldInvalid("target.Kind", secretSource.Target.Kind, "Secret"))
+		allErrs = append(allErrs, errs.NewFieldInvalid("target.kind", secretSource.Target.Kind, "Secret"))
 	}
 	return allErrs
 }
