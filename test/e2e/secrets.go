@@ -49,9 +49,9 @@ var _ = Describe("Secrets", func() {
 				Name:      name,
 			},
 			Data: map[string][]byte{
-				"data-1": []byte("value-1"),
-				"data-2": []byte("value-2"),
-				"data-3": []byte("value-3"),
+				"data-1": []byte("value-1\n"),
+				"data-2": []byte("value-2\n"),
+				"data-3": []byte("value-3\n"),
 			},
 		}
 
@@ -94,8 +94,9 @@ var _ = Describe("Secrets", func() {
 				},
 				Containers: []api.Container{
 					{
-						Name:    "catcont",
-						Image:   "busybox",
+						Name:  "catcont",
+						Image: "busybox",
+						// Command: []string{"cat", "/etc/nsswitch.conf"},
 						Command: []string{"cat", "/etc/secret-volume/data-1"},
 						VolumeMounts: []api.VolumeMount{
 							{
@@ -105,6 +106,9 @@ var _ = Describe("Secrets", func() {
 							},
 						},
 					},
+				},
+				RestartPolicy: api.RestartPolicy{
+					Never: &api.RestartPolicyNever{},
 				},
 			},
 		}

@@ -12,7 +12,7 @@
       "containers": [{
         "name": "hello-openshift",
         "image": "busybox",
-        "command": [ "sh", "-c", "cat", "/etc/secret-volume/data-2" ],
+        "command": [ "cat", "/etc/secret-volume/data-1" ],
         "volumeMounts": [{
           "name": "secret-volume",
           "mountPath": "/etc/secret-volume",
