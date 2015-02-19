@@ -46,6 +46,7 @@ import (
 	"github.com/GoogleCloudPlatform/kubernetes/pkg/types"
 	"github.com/GoogleCloudPlatform/kubernetes/pkg/util"
 	"github.com/GoogleCloudPlatform/kubernetes/pkg/util/errors"
+	"github.com/GoogleCloudPlatform/kubernetes/pkg/util/mount"
 	"github.com/fsouza/go-dockerclient"
 	"github.com/golang/glog"
 )
@@ -89,6 +90,7 @@ func NewMainKubelet(
 	clusterDNS net.IP,
 	masterServiceNamespace string,
 	volumePlugins []volume.Plugin,
+        mountTmpfs bool,
 	streamingConnectionIdleTimeout time.Duration,
 	recorder record.EventRecorder) (*Kubelet, error) {
 	if rootDirectory == "" {
@@ -119,6 +121,9 @@ func NewMainKubelet(
 		etcdClient:                     etcdClient,
 		kubeClient:                     kubeClient,
 		rootDirectory:                  rootDirectory,
+		tmpfsRootDirectory:             path.Join(rootDirectory, "tmpfs"), // TODO: pass in from cli
+		mounter:                        mount.New(),
+		mountTmpfs:                     mountTmpfs,
 		resyncInterval:                 resyncInterval,
 		podInfraContainerImage:         podInfraContainerImage,
 		dockerIDToRef:                  map[dockertools.DockerID]*api.ObjectReference{},
@@ -233,6 +238,10 @@ type Kubelet struct {
 	// connections open before terminating them
 	streamingConnectionIdleTimeout time.Duration
 
+	tmpfsRootDirectory string
+	mountTmpfs         bool
+	mounter            mount.Interface
+
 	// the EventRecorder to use
 	recorder record.EventRecorder
 }
@@ -296,8 +305,8 @@ func (kl *Kubelet) getPodVolumesDir(podUID types.UID) string {
 }
 
 // getPodVolumeDir returns the full path to the directory which represents the
-// named volume under the named plugin for specified pod.  This directory may not
-// exist if the pod does not exist.
+// named volume under the named plugin for the specified pod.  This directory
+// may not exist if the pod does not exist.
 func (kl *Kubelet) getPodVolumeDir(podUID types.UID, pluginName string, volumeName string) string {
 	return path.Join(kl.getPodVolumesDir(podUID), pluginName, volumeName)
 }
@@ -339,6 +348,24 @@ func (kl *Kubelet) getPodContainerDir(podUID types.UID, ctrName string) string {
 	return newPath
 }
 
+// getTmpfsRootDir returns the full path to the kubelet's tmpfs root directory.
+func (kl *Kubelet) getTmpfsRootDir() string {
+	return kl.tmpfsRootDirectory
+}
+
+// getTmpfsPodsDir returns the full path to the tmpfs-backed directory under
+// which pod directories are created.
+func (kl *Kubelet) getTmpfsPodsDir() string {
+	return path.Join(kl.getTmpfsRootDir(), "pods")
+}
+
+// getTmpfsPodVolumeDir returns the full path to the full path to the directory
+// which represents tmpfs storage for the named volume under the named plugin
+// for the specified pod.  This directory may not exist if the pod does not exist.
+func (kl *Kubelet) getTmpfsPodVolumeDir(podUID types.UID, pluginName, volumeName string) string {
+	return path.Join(kl.getTmpfsRootDir(), "pods", string(podUID), "volumes", pluginName, volumeName)
+}
+
 func dirExists(path string) bool {
 	s, err := os.Stat(path)
 	if err != nil {
@@ -348,6 +375,20 @@ func dirExists(path string) bool {
 }
 
 func (kl *Kubelet) setupDataDirs() error {
+	err := kl.setupLocalDataDirs()
+	if err != nil {
+		return err
+	}
+
+	err = kl.setupTmpfsDataDirs()
+	if err != nil {
+		return err
+	}
+
+	return err
+}
+
+func (kl *Kubelet) setupLocalDataDirs() error {
 	kl.rootDirectory = path.Clean(kl.rootDirectory)
 	if err := os.MkdirAll(kl.getRootDir(), 0750); err != nil {
 		return fmt.Errorf("error creating root directory: %v", err)
@@ -357,6 +398,28 @@ func (kl *Kubelet) setupDataDirs() error {
 	}
 	if err := os.MkdirAll(kl.getPluginsDir(), 0750); err != nil {
 		return fmt.Errorf("error creating plugins directory: %v", err)
+	}
+	return nil
+}
+
+func (kl *Kubelet) setupTmpfsDataDirs() error {
+	kl.tmpfsRootDirectory = path.Clean(kl.tmpfsRootDirectory)
+	// TODO: handle edge cases like mount already exists
+	var err error
+	if err = os.MkdirAll(kl.getTmpfsRootDir(), 0750); err != nil {
+		return fmt.Errorf("error creating tmpfs root directory: %v", err)
+	}
+	// FUTURE: set any security context labels correctly
+	// FUTURE: determine mount size from kubelet property
+	if kl.mountTmpfs {
+		label := "mode=0755,size=10g"
+		err = kl.mounter.Mount("tmpfs", kl.tmpfsRootDirectory, "tmpfs", uintptr(tmpfsMountFlags), label)
+		if err != nil {
+			return fmt.Errorf("error mounting tmpfs root directory (%v): %v", kl.tmpfsRootDirectory, err)
+		}
+	}
+	if err = os.MkdirAll(kl.getTmpfsPodsDir(), 0750); err != nil {
+		return fmt.Errorf("error creating tmpfs pods directory: %v", err)
 	}
 	return nil
 }
