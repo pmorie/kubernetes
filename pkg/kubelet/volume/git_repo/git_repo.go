@@ -154,7 +154,7 @@ func (gr *gitRepo) SetUp() error {
 }
 
 func (gr *gitRepo) getMetaDir() string {
-	return path.Join(gr.plugin.host.GetPodPluginDir(gr.podUID, volume.EscapePluginName(gitRepoPluginName)), gr.volName)
+	return path.Join(gr.plugin.host.GetPodPluginDir(volume.StorageKindLocal, gr.podUID, volume.EscapePluginName(gitRepoPluginName)), gr.volName)
 }
 
 func (gr *gitRepo) isReady() bool {
@@ -197,7 +197,7 @@ func (gr *gitRepo) GetPath() string {
 	if gr.legacyMode {
 		name = gitRepoPluginLegacyName
 	}
-	return gr.plugin.host.GetPodVolumeDir(gr.podUID, volume.EscapePluginName(name), gr.volName)
+	return gr.plugin.host.GetPodVolumeDir(volume.StorageKindLocal, gr.podUID, volume.EscapePluginName(name), gr.volName)
 }
 
 // TearDown simply deletes everything in the directory.

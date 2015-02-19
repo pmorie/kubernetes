@@ -230,7 +230,7 @@ func (pd *gcePersistentDisk) SetUp() error {
 }
 
 func makeGlobalPDName(host volume.Host, devName string) string {
-	return path.Join(host.GetPluginDir(gcePersistentDiskPluginName), "mounts", devName)
+	return path.Join(host.GetPluginDir(volume.StorageKindLocal, gcePersistentDiskPluginName), "mounts", devName)
 }
 
 func (pd *gcePersistentDisk) GetPath() string {
@@ -238,7 +238,7 @@ func (pd *gcePersistentDisk) GetPath() string {
 	if pd.legacyMode {
 		name = gcePersistentDiskPluginLegacyName
 	}
-	return pd.plugin.host.GetPodVolumeDir(pd.podUID, volume.EscapePluginName(name), pd.volName)
+	return pd.plugin.host.GetPodVolumeDir(volume.StorageKindLocal, pd.podUID, volume.EscapePluginName(name), pd.volName)
 }
 
 // Unmounts the bind mount, and detaches the disk only if the PD

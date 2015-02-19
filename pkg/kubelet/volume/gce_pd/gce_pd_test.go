@@ -27,7 +27,7 @@ import (
 
 func TestCanSupport(t *testing.T) {
 	plugMgr := volume.PluginMgr{}
-	plugMgr.InitPlugins(ProbeVolumePlugins(), &volume.FakeHost{"/tmp/fake", nil})
+	plugMgr.InitPlugins(ProbeVolumePlugins(), &volume.FakeHost{RootDir: "/tmp/fake"})
 
 	plug, err := plugMgr.FindPluginByName("kubernetes.io/gce-pd")
 	if err != nil {
@@ -65,7 +65,7 @@ func (fake *fakePDManager) DetachDisk(pd *gcePersistentDisk) error {
 
 func TestPlugin(t *testing.T) {
 	plugMgr := volume.PluginMgr{}
-	plugMgr.InitPlugins(ProbeVolumePlugins(), &volume.FakeHost{"/tmp/fake", nil})
+	plugMgr.InitPlugins(ProbeVolumePlugins(), &volume.FakeHost{RootDir: "/tmp/fake"})
 
 	plug, err := plugMgr.FindPluginByName("kubernetes.io/gce-pd")
 	if err != nil {
@@ -131,7 +131,7 @@ func TestPlugin(t *testing.T) {
 
 func TestPluginLegacy(t *testing.T) {
 	plugMgr := volume.PluginMgr{}
-	plugMgr.InitPlugins(ProbeVolumePlugins(), &volume.FakeHost{"/tmp/fake", nil})
+	plugMgr.InitPlugins(ProbeVolumePlugins(), &volume.FakeHost{RootDir: "/tmp/fake"})
 
 	plug, err := plugMgr.FindPluginByName("gce-pd")
 	if err != nil {

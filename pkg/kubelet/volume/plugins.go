@@ -58,25 +58,32 @@ type Plugin interface {
 	NewCleaner(name string, podUID types.UID) (Cleaner, error)
 }
 
+type StorageKind string
+
+const (
+	StorageKindLocal StorageKind = "Local"
+	StorageKindTmpfs StorageKind = "Tmpfs"
+)
+
 // Host is an interface that plugins can use to access the kubelet.
 type Host interface {
 	// GetPluginDir returns the absolute path to a directory under which
 	// a given plugin may store data.  This directory might not actually
 	// exist on disk yet.  For plugin data that is per-pod, see
 	// GetPodPluginDir().
-	GetPluginDir(pluginName string) string
+	GetPluginDir(kind StorageKind, pluginName string) string
 
-	// GetPodVolumeDir returns the absolute path a directory which
+	// GetPodVolumeDir returns the absolute path to a directory which
 	// represents the named volume under the named plugin for the given
 	// pod.  If the specified pod does not exist, the result of this call
 	// might not exist.
-	GetPodVolumeDir(podUID types.UID, pluginName string, volumeName string) string
+	GetPodVolumeDir(kind StorageKind, podUID types.UID, pluginName string, volumeName string) string
 
 	// GetPodPluginDir returns the absolute path to a directory under which
 	// a given plugin may store data for a given pod.  If the specified pod
 	// does not exist, the result of this call might not exist.  This
 	// directory might not actually exist on disk yet.
-	GetPodPluginDir(podUID types.UID, pluginName string) string
+	GetPodPluginDir(kind StorageKind, podUID types.UID, pluginName string) string
 
 	// GetKubeClient returns a client interface
 	GetKubeClient() client.Interface

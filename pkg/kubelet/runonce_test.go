@@ -23,6 +23,7 @@ import (
 
 	"github.com/GoogleCloudPlatform/kubernetes/pkg/api"
 	"github.com/GoogleCloudPlatform/kubernetes/pkg/kubelet/dockertools"
+	"github.com/GoogleCloudPlatform/kubernetes/pkg/util/mount"
 	docker "github.com/fsouza/go-dockerclient"
 )
 
@@ -67,7 +68,9 @@ func (d *testDocker) InspectContainer(id string) (*docker.Container, error) {
 
 func TestRunOnce(t *testing.T) {
 	kb := &Kubelet{
-		rootDirectory: "/tmp/kubelet",
+		rootDirectory:      "/tmp/kubelet",
+		tmpfsRootDirectory: "/tmp/kubelet/tmpfs",
+		mounter:            &mount.FakeMounter{},
 	}
 	if err := kb.setupDataDirs(); err != nil {
 		t.Errorf("Failed to init data dirs: %v", err)
