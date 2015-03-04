@@ -1,7 +1,7 @@
 // +build linux
 
 /*
-Copyright 2014 Google Inc. All rights reserved.
+Copyright 2015 Google Inc. All rights reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -22,4 +22,4 @@ import (
 	"syscall"
 )
 
-const tmpfsMountFlags = syscall.MS_NOEXEC | syscall.MS_NOSUID | syscall.MS_NODEV
+const tmpfsMountFlags = uint(syscall.MS_NOEXEC | syscall.MS_NOSUID | syscall.MS_NODEV)

@@ -154,6 +154,9 @@ func (s *KubeletServer) Run(_ []string) error {
 		s.EtcdServerList = util.StringList{}
 	}
 
+	glog.Infof("Using root directory: %v", s.RootDirectory)
+	glog.Infof("Mount tmpfs storage:  %v", s.MountTmpfs)
+
 	if err := util.ApplyOomScoreAdj(0, s.OOMScoreAdj); err != nil {
 		glog.Info(err)
 	}

@@ -108,7 +108,7 @@ func (ed *emptyDir) GetPath() string {
 	if ed.legacyMode {
 		name = emptyDirPluginLegacyName
 	}
-	return ed.plugin.host.GetPodVolumeDir(volume.StorageKindLocal, ed.podUID, volume.EscapePluginName(name), ed.volName)
+	return ed.plugin.host.GetPodVolumeDir(ed.podUID, volume.EscapePluginName(name), ed.volName)
 }
 
 // TearDown simply deletes everything in the directory.

@@ -32,37 +32,20 @@ type FakeHost struct {
 	KubeClient   client.Interface
 }
 
-func (f *FakeHost) GetPluginDir(kind StorageKind, pluginName string) string {
-	switch kind {
-	case StorageKindLocal:
-		return path.Join(f.RootDir, "plugins", pluginName)
-	case StorageKindTmpfs:
-		return path.Join(f.TmpfsRootDir, "plugins", pluginName)
-	}
-
-	return ""
+func (f *FakeHost) GetPluginDir(pluginName string) string {
+	return path.Join(f.RootDir, "plugins", pluginName)
 }
 
-func (f *FakeHost) GetPodVolumeDir(kind StorageKind, podUID types.UID, pluginName, volumeName string) string {
-	switch kind {
-	case StorageKindLocal:
-		return path.Join(f.RootDir, "pods", string(podUID), "volumes", pluginName, volumeName)
-	case StorageKindTmpfs:
-		return path.Join(f.TmpfsRootDir, "pods", string(podUID), "volumes", pluginName, volumeName)
-	}
-
-	return ""
+func (f *FakeHost) GetPodVolumeDir(podUID types.UID, pluginName, volumeName string) string {
+	return path.Join(f.RootDir, "pods", string(podUID), "volumes", pluginName, volumeName)
 }
 
-func (f *FakeHost) GetPodPluginDir(kind StorageKind, podUID types.UID, pluginName string) string {
-	switch kind {
-	case StorageKindLocal:
-		return path.Join(f.RootDir, "pods", string(podUID), "plugins", pluginName)
-	case StorageKindTmpfs:
-		return path.Join(f.TmpfsRootDir, "pods", string(podUID), "plugins", pluginName)
-	}
+func (f *FakeHost) GetTmpfsPodVolumeDir(podUID types.UID, pluginName, volumeName string) string {
+	return path.Join(f.TmpfsRootDir, "pods", string(podUID), "volumes", pluginName, volumeName)
+}
 
-	return ""
+func (f *FakeHost) GetPodPluginDir(podUID types.UID, pluginName string) string {
+	return path.Join(f.RootDir, "pods", string(podUID), "plugins", pluginName)
 }
 
 func (f *FakeHost) GetKubeClient() client.Interface {
@@ -112,7 +95,7 @@ func (fv *FakeVolume) SetUp() error {
 }
 
 func (fv *FakeVolume) GetPath() string {
-	return path.Join(fv.Plugin.Host.GetPodVolumeDir(StorageKindLocal, fv.PodUID, EscapePluginName(fv.Plugin.PluginName), fv.VolName))
+	return path.Join(fv.Plugin.Host.GetPodVolumeDir(fv.PodUID, EscapePluginName(fv.Plugin.PluginName), fv.VolName))
 }
 
 func (fv *FakeVolume) TearDown() error {

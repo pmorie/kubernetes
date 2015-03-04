@@ -116,7 +116,7 @@ func (sv *secretVolume) SetUp() error {
 }
 
 func (sv *secretVolume) GetPath() string {
-	return sv.plugin.host.GetPodVolumeDir(volume.StorageKindTmpfs, sv.podUID, volume.EscapePluginName(secretPluginName), sv.volName)
+	return sv.plugin.host.GetTmpfsPodVolumeDir(sv.podUID, volume.EscapePluginName(secretPluginName), sv.volName)
 }
 
 func (sv *secretVolume) TearDown() error {

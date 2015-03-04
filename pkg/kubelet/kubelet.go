@@ -300,8 +300,8 @@ func (kl *Kubelet) getPodVolumesDir(podUID types.UID) string {
 }
 
 // getPodVolumeDir returns the full path to the directory which represents the
-// named volume under the named plugin for specified pod.  This directory may not
-// exist if the pod does not exist.
+// named volume under the named plugin for the specified pod.  This directory
+// may not exist if the pod does not exist.
 func (kl *Kubelet) getPodVolumeDir(podUID types.UID, pluginName string, volumeName string) string {
 	return path.Join(kl.getPodVolumesDir(podUID), pluginName, volumeName)
 }
@@ -348,36 +348,17 @@ func (kl *Kubelet) getTmpfsRootDir() string {
 	return kl.tmpfsRootDirectory
 }
 
-func (kl *Kubelet) getTmpfsPluginsDir() string {
-	return path.Join(kl.getTmpfsRootDir(), "plugins")
-}
-
-func (kl *Kubelet) getTmpfsPluginDir(pluginName string) string {
-	return path.Join(kl.getTmpfsPluginsDir(), pluginName)
-}
-
+// getTmpfsPodsDir returns the full path to the tmpfs-backed directory under
+// which pod directories are created.
 func (kl *Kubelet) getTmpfsPodsDir() string {
 	return path.Join(kl.getTmpfsRootDir(), "pods")
 }
 
-func (kl *Kubelet) getTmpfsPodDir(podUID types.UID) string {
-	return path.Join(kl.getTmpfsPodsDir(), string(podUID))
-}
-
-func (kl *Kubelet) getTmpfsPodVolumesDir(podUID types.UID) string {
-	return path.Join(kl.getTmpfsPodDir(podUID), "volumes")
-}
-
+// getTmpfsPodVolumeDir returns the full path to the full path to the directory
+// which represents tmpfs storage for the named volume under the named plugin
+// for the specified pod.  This directory may not exist if the pod does not exist.
 func (kl *Kubelet) getTmpfsPodVolumeDir(podUID types.UID, pluginName, volumeName string) string {
-	return path.Join(kl.getTmpfsPodVolumesDir(podUID), pluginName, volumeName)
-}
-
-func (kl *Kubelet) getTmpfsPodPluginsDir(podUID types.UID) string {
-	return path.Join(kl.getTmpfsPodDir(podUID), "plugins")
-}
-
-func (kl *Kubelet) getTmpfsPodPluginDir(podUID types.UID, pluginName string) string {
-	return path.Join(kl.getTmpfsPodPluginsDir(podUID), pluginName)
+	return path.Join(kl.getTmpfsRootDir(), "pods", string(podUID), "volumes", pluginName, volumeName)
 }
 
 func dirExists(path string) bool {
@@ -425,7 +406,6 @@ func (kl *Kubelet) setupTmpfsDataDirs() error {
 	}
 	// FUTURE: set any security context labels correctly
 	// FUTURE: determine mount size from kubelet property
-	// TODO: determine the right way to encapsulate concerns for test-only kubelet (ie, non-root)
 	if kl.mountTmpfs {
 		label := "mode=0755,size=10g"
 		err = kl.mounter.Mount("tmpfs", kl.tmpfsRootDirectory, "tmpfs", uintptr(tmpfsMountFlags), label)
@@ -435,9 +415,6 @@ func (kl *Kubelet) setupTmpfsDataDirs() error {
 	}
 	if err = os.MkdirAll(kl.getTmpfsPodsDir(), 0750); err != nil {
 		return fmt.Errorf("error creating tmpfs pods directory: %v", err)
-	}
-	if err = os.MkdirAll(kl.getTmpfsPluginsDir(), 0750); err != nil {
-		return fmt.Errorf("error creating tmpfs plugins directory: %v", err)
 	}
 	return nil
 }

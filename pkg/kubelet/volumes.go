@@ -37,37 +37,20 @@ type volumeHost struct {
 	kubelet *Kubelet
 }
 
-func (vh *volumeHost) GetPluginDir(kind volume.StorageKind, pluginName string) string {
-	switch kind {
-	case volume.StorageKindLocal:
-		return vh.kubelet.getPluginDir(pluginName)
-	case volume.StorageKindTmpfs:
-		return vh.kubelet.getTmpfsPluginDir(pluginName)
-	}
-
-	return "" // should be unreachable
+func (vh *volumeHost) GetPluginDir(pluginName string) string {
+	return vh.kubelet.getPluginDir(pluginName)
 }
 
-func (vh *volumeHost) GetPodVolumeDir(kind volume.StorageKind, podUID types.UID, pluginName string, volumeName string) string {
-	switch kind {
-	case volume.StorageKindLocal:
-		return vh.kubelet.getPodVolumeDir(podUID, pluginName, volumeName)
-	case volume.StorageKindTmpfs:
-		return vh.kubelet.getTmpfsPodVolumeDir(podUID, pluginName, volumeName)
-	}
-
-	return "" // should be unreachable
+func (vh *volumeHost) GetPodVolumeDir(podUID types.UID, pluginName, volumeName string) string {
+	return vh.kubelet.getPodVolumeDir(podUID, pluginName, volumeName)
 }
 
-func (vh *volumeHost) GetPodPluginDir(kind volume.StorageKind, podUID types.UID, pluginName string) string {
-	switch kind {
-	case volume.StorageKindLocal:
-		return vh.kubelet.getPodPluginDir(podUID, pluginName)
-	case volume.StorageKindTmpfs:
-		return vh.kubelet.getTmpfsPodPluginDir(podUID, pluginName)
-	}
+func (vh *volumeHost) GetTmpfsPodVolumeDir(podUID types.UID, pluginName, volumeName string) string {
+	return vh.kubelet.getTmpfsPodVolumeDir(podUID, pluginName, volumeName)
+}
 
-	return "" // should be unreachable
+func (vh *volumeHost) GetPodPluginDir(podUID types.UID, pluginName string) string {
+	return vh.kubelet.getPodPluginDir(podUID, pluginName)
 }
 
 func (vh *volumeHost) GetKubeClient() client.Interface {
