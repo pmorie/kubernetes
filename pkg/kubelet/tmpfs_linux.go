@@ -19,11 +19,19 @@ limitations under the License.
 package kubelet
 
 import (
+	"fmt"
 	"syscall"
+
+	"github.com/docker/libcontainer/selinux"
 )
 
 const tmpfsMountFlags = uint(syscall.MS_NOEXEC | syscall.MS_NOSUID | syscall.MS_NODEV)
 
 func (kl *kubelet) getTmpfsMountOptions() (string, error) {
-	return "mode=0755,size=10g", nil
+	rootContext, err := selinux.GetFilecon(kl.getRootDir())
+	if err != nil {
+		return "", err	
+	}
+
+	return fmt.Sprintf("mode=0755,size=10g,rootcontext=\"%v\"", rootContext), nil
 }
