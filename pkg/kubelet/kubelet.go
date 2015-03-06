@@ -90,7 +90,7 @@ func NewMainKubelet(
 	clusterDNS net.IP,
 	masterServiceNamespace string,
 	volumePlugins []volume.Plugin,
-        mountTmpfs bool,
+	mountTmpfs bool,
 	streamingConnectionIdleTimeout time.Duration,
 	recorder record.EventRecorder) (*Kubelet, error) {
 	if rootDirectory == "" {
@@ -404,21 +404,26 @@ func (kl *Kubelet) setupLocalDataDirs() error {
 
 func (kl *Kubelet) setupTmpfsDataDirs() error {
 	kl.tmpfsRootDirectory = path.Clean(kl.tmpfsRootDirectory)
-	// TODO: handle edge cases like mount already exists
-	var err error
-	if err = os.MkdirAll(kl.getTmpfsRootDir(), 0750); err != nil {
+	if err := os.MkdirAll(kl.getTmpfsRootDir(), 0750); err != nil {
 		return fmt.Errorf("error creating tmpfs root directory: %v", err)
 	}
+	isMount, err := mount.IsMountPoint(kl.getTmpfsRootDir())
+	if err != nil {
+		return fmt.Errorf("error determining whether tmpfs root dir is a mountpoint: %v", err)
+	}
+
 	// FUTURE: set any security context labels correctly
 	// FUTURE: determine mount size from kubelet property
-	if kl.mountTmpfs {
+	if isMount {
+		glog.V(2).Infof("Tmpfs root dir is already a mountpoint, skipping mount: %v", kl.getTmpfsRootDir())
+	} else if kl.mountTmpfs {
 		label := "mode=0755,size=10g"
-		err = kl.mounter.Mount("tmpfs", kl.tmpfsRootDirectory, "tmpfs", uintptr(tmpfsMountFlags), label)
+		err := kl.mounter.Mount("tmpfs", kl.tmpfsRootDirectory, "tmpfs", uintptr(tmpfsMountFlags), label)
 		if err != nil {
 			return fmt.Errorf("error mounting tmpfs root directory (%v): %v", kl.tmpfsRootDirectory, err)
 		}
 	}
-	if err = os.MkdirAll(kl.getTmpfsPodsDir(), 0750); err != nil {
+	if err := os.MkdirAll(kl.getTmpfsPodsDir(), 0750); err != nil {
 		return fmt.Errorf("error creating tmpfs pods directory: %v", err)
 	}
 	return nil

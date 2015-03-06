@@ -89,6 +89,9 @@ func newTestKubelet(t *testing.T) (*Kubelet, *dockertools.FakeDockerClient, *syn
 	if err := kubelet.setupDataDirs(); err != nil {
 		t.Fatalf("can't initialize kubelet data dirs: %v", err)
 	}
+	if _, err := os.Stat(kubelet.tmpfsRootDirectory); err != nil {
+		t.Fatalf("failed to stat tmpfs root directory: %v", err)
+	}
 
 	return kubelet, fakeDocker, waitGroup
 }
@@ -144,6 +147,7 @@ func verifyBoolean(t *testing.T, expected, value bool) {
 func TestKubeletDirs(t *testing.T) {
 	kubelet, _, _ := newTestKubelet(t)
 	root := kubelet.rootDirectory
+	tmpfsRoot := kubelet.tmpfsRootDirectory
 
 	var exp, got string
 
@@ -179,6 +183,12 @@ func TestKubeletDirs(t *testing.T) {
 
 	got = kubelet.getPodVolumeDir("abc123", "plugin", "foobar")
 	exp = path.Join(root, "pods/abc123/volumes/plugin/foobar")
+	if got != exp {
+		t.Errorf("expected %q', got %q", exp, got)
+	}
+
+	got = kubelet.getTmpfsPodVolumeDir("abc123", "plugin", "tmpfsuser")
+	exp = path.Join(tmpfsRoot, "pods/abc123/volumes/plugin/tmpfsuser")
 	if got != exp {
 		t.Errorf("expected %q', got %q", exp, got)
 	}
