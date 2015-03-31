@@ -215,6 +215,10 @@ func (c *Fake) Actions() []Action {
 	return fa
 }
 
+func (c *Fake) ConfigMaps(namespace string) client.ConfigMapsInterface {
+	return &FakeConfigMaps{Fake: c, Namespace: namespace}
+}
+
 func (c *Fake) LimitRanges(namespace string) client.LimitRangeInterface {
 	return &FakeLimitRanges{Fake: c, Namespace: namespace}
 }
