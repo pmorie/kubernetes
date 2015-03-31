@@ -58,6 +58,8 @@ func addKnownTypes() {
 		&Ingress{},
 		&IngressList{},
 		&ListOptions{},
+		&ConfigMap{},
+		&ConfigMapList{},
 	)
 }
 
@@ -80,3 +82,5 @@ func (*ThirdPartyResourceDataList) IsAnAPIObject()  {}
 func (*Ingress) IsAnAPIObject()                     {}
 func (*IngressList) IsAnAPIObject()                 {}
 func (*ListOptions) IsAnAPIObject()                 {}
+func (*ConfigMap) IsAnAPIObject()                   {}
+func (*ConfigMapList) IsAnAPIObject()               {}
