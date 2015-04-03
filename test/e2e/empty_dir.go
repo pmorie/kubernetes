@@ -17,6 +17,7 @@ limitations under the License.
 package e2e
 
 import (
+	"fmt"
 	"github.com/GoogleCloudPlatform/kubernetes/pkg/api"
 	"github.com/GoogleCloudPlatform/kubernetes/pkg/client"
 	"github.com/GoogleCloudPlatform/kubernetes/pkg/util"
@@ -38,45 +39,80 @@ var _ = Describe("emptyDir", func() {
 		podClient = c.Pods(api.NamespaceDefault)
 	})
 
-	It("should support tmpfs in emptyDir", func() {
-		name := "pod-" + string(util.NewUUID())
-		pod := &api.Pod{
-			TypeMeta: api.TypeMeta{
-				Kind:       "Pod",
-				APIVersion: "v1beta1",
-			},
-			ObjectMeta: api.ObjectMeta{
-				Name: name,
-			},
-			Spec: api.PodSpec{
-				Containers: []api.Container{
-					{
-						Name:  "mount-test",
-						Image: "kubernetes/mounttest:0.1",
-						Args:  []string{"--fs_type=/testvol"},
-						VolumeMounts: []api.VolumeMount{
-							{
-								Name:      "testvol",
-								MountPath: "/testvol",
-							},
-						},
-					},
-				},
-				Volumes: []api.Volume{
-					{
-						Name: "testvol",
-						VolumeSource: api.VolumeSource{
-							EmptyDir: &api.EmptyDirVolumeSource{
-								Medium: api.StorageTypeMemory,
-							},
-						},
-					},
-				},
-			},
+	It("should support tmpfs", func() {
+		path := "/testvol"
+		source := &api.EmptyDirVolumeSource{
+			Medium: api.StorageTypeMemory,
+		}
+		pod := testPodWithVolume(path, source)
+
+		pod.Spec.Containers[0].Args = []string{
+			fmt.Sprintf("--fs_type=%q", path),
+			fmt.Sprintf("--file_mode=%q", path),
 		}
 
 		testContainerOutput("tmpfs mount for emptydir", c, pod, []string{
 			"mount type: tmpfs",
+			"mode: drwxr-xr-x",
+		})
+	})
+
+	It("should be readable and writeable if we requested R/W on tmpfs", func() {
+		path := "/testvol"
+		filepath := fmt.Sprintf("%q/testfile", path)
+		source := &api.EmptyDirVolumeSource{
+			Medium: api.StorageTypeMemory,
+		}
+		pod := testPodWithVolume(path, source)
+
+		pod.Spec.Containers[0].Args = []string{
+			fmt.Sprintf("--fs_type=%q", path),
+			fmt.Sprintf("--file_mode=%q", filepath),
+			fmt.Sprintf("--rw_new_file=%q", filepath),
+		}
+		testContainerOutput("tmpfs R/W for emptydir", c, pod, []string{
+			"mount type: tmpfs",
+			"mode: drwxr-xr-x",
+			fmt.Sprintf("content of file %q: mount-tester new file", filepath),
 		})
 	})
 })
+
+const containerName = "test-container"
+const volumeName = "test-volume"
+
+func testPodWithVolume(path string, source *api.EmptyDirVolumeSource) *api.Pod {
+	podName := "pod-" + string(util.NewUUID())
+
+	return &api.Pod{
+		TypeMeta: api.TypeMeta{
+			Kind:       "Pod",
+			APIVersion: "v1beta1",
+		},
+		ObjectMeta: api.ObjectMeta{
+			Name: podName,
+		},
+		Spec: api.PodSpec{
+			Containers: []api.Container{
+				{
+					Name:  containerName,
+					Image: "kubernetes/mounttest:0.1",
+					VolumeMounts: []api.VolumeMount{
+						{
+							Name:      volumeName,
+							MountPath: path,
+						},
+					},
+				},
+			},
+			Volumes: []api.Volume{
+				{
+					Name: volumeName,
+					VolumeSource: api.VolumeSource{
+						EmptyDir: source,
+					},
+				},
+			},
+		},
+	}
+}
