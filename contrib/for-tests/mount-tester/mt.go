@@ -53,17 +53,17 @@ func main() {
 		errs = append(errs, err)
 	}
 
+	err = readWriteNewFile(readWriteNewFilePath)
+	if err != nil {
+		errs = append(errs, err)
+	}
+
 	err = fileMode(fileModePath)
 	if err != nil {
 		errs = append(errs, err)
 	}
 
 	err = readFileContent(readFileContentPath)
-	if err != nil {
-		errs = append(errs, err)
-	}
-
-	err = readWriteNewFile(readWriteNewFilePath)
 	if err != nil {
 		errs = append(errs, err)
 	}
@@ -90,9 +90,9 @@ func fsType(path string) error {
 	}
 
 	if buf.Type == linuxTmpfsMagic {
-		fmt.Println("mount type: tmpfs")
+		fmt.Printf("mount type of %q: tmpfs\n", path)
 	} else {
-		fmt.Printf("mount type: %v\n", buf.Type)
+		fmt.Printf("mount type of %q: %v\n", path, buf.Type)
 	}
 
 	return nil
@@ -109,7 +109,7 @@ func fileMode(path string) error {
 		return err
 	}
 
-	fmt.Printf("mode: %v\n", fileinfo.Mode())
+	fmt.Printf("mode of file %q: %v\n", path, fileinfo.Mode())
 	return nil
 }
 

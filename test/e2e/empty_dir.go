@@ -18,6 +18,8 @@ package e2e
 
 import (
 	"fmt"
+	"path"
+
 	"github.com/GoogleCloudPlatform/kubernetes/pkg/api"
 	"github.com/GoogleCloudPlatform/kubernetes/pkg/client"
 	"github.com/GoogleCloudPlatform/kubernetes/pkg/util"
@@ -39,41 +41,40 @@ var _ = Describe("emptyDir", func() {
 		podClient = c.Pods(api.NamespaceDefault)
 	})
 
-	It("should support tmpfs", func() {
-		path := "/testvol"
+	It("volume on tmpfs should have the correct mode", func() {
+		volumePath := "/test-volume"
 		source := &api.EmptyDirVolumeSource{
 			Medium: api.StorageTypeMemory,
 		}
-		pod := testPodWithVolume(path, source)
+		pod := testPodWithVolume(volumePath, source)
 
 		pod.Spec.Containers[0].Args = []string{
-			fmt.Sprintf("--fs_type=%q", path),
-			fmt.Sprintf("--file_mode=%q", path),
+			fmt.Sprintf("--fs_type=%v", volumePath),
+			fmt.Sprintf("--file_mode=%v", volumePath),
 		}
-
-		testContainerOutput("tmpfs mount for emptydir", c, pod, []string{
-			"mount type: tmpfs",
-			"mode: drwxr-xr-x",
+		testContainerOutput("emptydir r/w on tmpfs", c, pod, []string{
+			"mount type of \"/test-volume\": tmpfs",
+			"mode of file \"/test-volume\": dtrwxrwxrwx", // we expect the sticky bit (mode flag t) to be set for the dir
 		})
 	})
 
-	It("should be readable and writeable if we requested R/W on tmpfs", func() {
-		path := "/testvol"
-		filepath := fmt.Sprintf("%q/testfile", path)
+	It("should support r/w on tmpfs", func() {
+		volumePath := "/test-volume"
+		filePath := path.Join(volumePath, "test-file")
 		source := &api.EmptyDirVolumeSource{
 			Medium: api.StorageTypeMemory,
 		}
-		pod := testPodWithVolume(path, source)
+		pod := testPodWithVolume(volumePath, source)
 
 		pod.Spec.Containers[0].Args = []string{
-			fmt.Sprintf("--fs_type=%q", path),
-			fmt.Sprintf("--file_mode=%q", filepath),
-			fmt.Sprintf("--rw_new_file=%q", filepath),
+			fmt.Sprintf("--fs_type=%v", volumePath),
+			fmt.Sprintf("--rw_new_file=%v", filePath),
+			fmt.Sprintf("--file_mode=%v", filePath),
 		}
-		testContainerOutput("tmpfs R/W for emptydir", c, pod, []string{
-			"mount type: tmpfs",
-			"mode: drwxr-xr-x",
-			fmt.Sprintf("content of file %q: mount-tester new file", filepath),
+		testContainerOutput("emptydir r/w on tmpfs", c, pod, []string{
+			"mount type of \"/test-volume\": tmpfs",
+			"mode of file \"/test-volume/test-file\": -rw-r--r--",
+			"content of file \"/test-volume/test-file\": mount-tester new file",
 		})
 	})
 })
