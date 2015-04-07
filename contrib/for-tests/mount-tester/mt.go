@@ -35,11 +35,11 @@ func init() {
 	flag.StringVar(&fsTypePath, "fs_type", "", "Path to print the fs type for")
 	flag.StringVar(&fileModePath, "file_mode", "", "Path to print the filemode of")
 	flag.StringVar(&readFileContentPath, "file_content", "", "Path to read the file content from")
-	flag.StringVar(&readWriteNewFilePath, "rw_new_file", "", "Path to kubeconfig containing embeded authinfo.")
+	flag.StringVar(&readWriteNewFilePath, "rw_new_file", "", "Path to write to and read from")
 }
 
-// This program prints the fs type number (or string 'tmpfs') and the
-// filemode of the first argument it's passed.
+// This program performs some tests on the filesystem as dictated by the
+// flags passed by the user.
 func main() {
 	flag.Parse()
 
@@ -141,7 +141,5 @@ func readWriteNewFile(path string) error {
 		return err
 	}
 
-	readFileContent(path)
-
-	return nil
+	return readFileContent(path)
 }
