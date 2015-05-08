@@ -817,6 +817,17 @@ func (kl *Kubelet) makeEnvironmentVariables(pod *api.Pod, container *api.Contain
 		return result, err
 	}
 
+	// Determine the final values of variables in steps:
+	//
+	// 1.  Determine the runtime value of all variables by resolving
+	//     alternate env var sources.
+	// 2.  Determine the final value of each variable by expanding `$var` and `${var}`
+	//     references to other variables; the sources of variables are the declared
+	//     variables of the container and the service environment variables.
+	// 3.  Create the container's environment in the order variables are declared
+
+	// Step 1: resolve alternate env var sources
+	tmpEnv := make(map[string]string)
 	for _, value := range container.Env {
 		// Accesses apiserver+Pods.
 		// So, the master may set service env vars, or kubelet may.  In case both are doing
@@ -825,12 +836,36 @@ func (kl *Kubelet) makeEnvironmentVariables(pod *api.Pod, container *api.Contain
 		// TODO: remove this net line once all platforms use apiserver+Pods.
 		delete(serviceEnv, value.Name)
 
-		runtimeValue, err := kl.runtimeEnvVarValue(value, pod)
+		runtimeValue, err := kl.resolveEnvVarSource(value, pod)
 		if err != nil {
 			return result, err
 		}
 
-		result = append(result, fmt.Sprintf("%s=%s", value.Name, runtimeValue))
+		tmpEnv[value.Name] = runtimeValue
+	}
+
+	// Step 2: expand `$var` and `${var}`
+	mappingFunc := func(input string) string {
+		val, ok := tmpEnv[input]
+		if ok {
+			return val
+		}
+
+		val, ok = serviceEnv[input]
+		if ok {
+			return val
+		}
+
+		return ""
+	}
+	for _, value := range container.Env {
+		tmpEnv[value.Name] = os.Expand(tmpEnv[value.Name], mappingFunc)
+	}
+
+	// Step 3: create the container's env
+	for _, value := range container.Env {
+		name := value.Name
+		result = append(result, fmt.Sprintf("%s=%s", name, tmpEnv[name]))
 	}
 
 	// Append remaining service env vars.
@@ -845,7 +880,7 @@ func (kl *Kubelet) makeEnvironmentVariables(pod *api.Pod, container *api.Contain
 // is resolved, if one is specified.
 //
 // TODO: preliminary factoring; make better
-func (kl *Kubelet) runtimeEnvVarValue(envVar api.EnvVar, pod *api.Pod) (string, error) {
+func (kl *Kubelet) resolveEnvVarSource(envVar api.EnvVar, pod *api.Pod) (string, error) {
 	runtimeVal := envVar.Value
 	if runtimeVal != "" {
 		return runtimeVal, nil

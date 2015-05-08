@@ -2232,6 +2232,64 @@ func TestMakeEnvironmentVariables(t *testing.T) {
 				"POD_NAMESPACE=downward-api",
 			),
 		},
+		{
+			name: "env expansion",
+			ns:   "test1",
+			container: &api.Container{
+				Env: []api.EnvVar{
+					{
+						Name:  "TEST_LITERAL",
+						Value: "test-test-test",
+					},
+					{
+						Name: "POD_NAME",
+						ValueFrom: &api.EnvVarSource{
+							FieldRef: &api.ObjectFieldSelector{
+								APIVersion: "v1beta3",
+								FieldPath:  "metadata.name",
+							},
+						},
+					},
+					{
+						Name:  "POD_NAME_TEST",
+						Value: "test-$POD_NAME",
+					},
+					{
+						Name:  "POD_NAME_TEST2",
+						Value: "test2-${POD_NAME}",
+					},
+					{
+						Name:  "POD_NAME_TEST3",
+						Value: "test3-${POD_NAME", // Note: brace missing is intentional
+					},
+					{
+						Name:  "LITERAL_TEST",
+						Value: "literal-${TEST_LITERAL}",
+					},
+					{
+						Name:  "SERVICE_VAR_TEST",
+						Value: "${TEST_SERVICE_HOST}:${TEST_SERVICE_PORT}",
+					},
+				},
+			},
+			masterServiceNs: "nothing",
+			nilLister:       false,
+			expectedEnvs: util.NewStringSet(
+				"TEST_LITERAL=test-test-test",
+				"POD_NAME=dapi-test-pod-name",
+				"POD_NAME_TEST=test-dapi-test-pod-name",
+				"POD_NAME_TEST2=test2-dapi-test-pod-name",
+				"POD_NAME_TEST3=test3-POD_NAME",
+				"LITERAL_TEST=literal-test-test-test",
+				"TEST_SERVICE_HOST=1.2.3.3",
+				"TEST_SERVICE_PORT=8083",
+				"TEST_PORT=tcp://1.2.3.3:8083",
+				"TEST_PORT_8083_TCP=tcp://1.2.3.3:8083",
+				"TEST_PORT_8083_TCP_PROTO=tcp",
+				"TEST_PORT_8083_TCP_PORT=8083",
+				"TEST_PORT_8083_TCP_ADDR=1.2.3.3",
+				"SERVICE_VAR_TEST=1.2.3.3:8083"),
+		},
 	}
 
 	for _, tc := range testCases {
@@ -2258,7 +2316,6 @@ func TestMakeEnvironmentVariables(t *testing.T) {
 
 		resultSet := util.NewStringSet(result...)
 		if !resultSet.HasAll(tc.expectedEnvs.List()...) {
-
 			t.Errorf("[%v] Unexpected env entries; expected {%v}, got {%v}", tc.name, tc.expectedEnvs, resultSet)
 		}
 
