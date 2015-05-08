@@ -2259,10 +2259,6 @@ func TestMakeEnvironmentVariables(t *testing.T) {
 						Value: "test2-${POD_NAME}",
 					},
 					{
-						Name:  "POD_NAME_TEST3",
-						Value: "test3-${POD_NAME", // Note: brace missing is intentional
-					},
-					{
 						Name:  "LITERAL_TEST",
 						Value: "literal-${TEST_LITERAL}",
 					},
@@ -2279,7 +2275,6 @@ func TestMakeEnvironmentVariables(t *testing.T) {
 				"POD_NAME=dapi-test-pod-name",
 				"POD_NAME_TEST=test-dapi-test-pod-name",
 				"POD_NAME_TEST2=test2-dapi-test-pod-name",
-				"POD_NAME_TEST3=test3-POD_NAME",
 				"LITERAL_TEST=literal-test-test-test",
 				"TEST_SERVICE_HOST=1.2.3.3",
 				"TEST_SERVICE_PORT=8083",
@@ -2289,6 +2284,44 @@ func TestMakeEnvironmentVariables(t *testing.T) {
 				"TEST_PORT_8083_TCP_PORT=8083",
 				"TEST_PORT_8083_TCP_ADDR=1.2.3.3",
 				"SERVICE_VAR_TEST=1.2.3.3:8083"),
+		},
+		{
+			name: "env expansion warts",
+			ns:   "test1",
+			container: &api.Container{
+				Env: []api.EnvVar{
+					{
+						Name:  "TEST_LITERAL",
+						Value: "test-test-test",
+					},
+					{
+						Name:  "WART_1",
+						Value: "wart1-${POD_NAME",
+						// Note: brace missing is intentional;
+						// os.Expand strips bare `${` sequence
+					},
+					{
+						Name:  "WART_2",
+						Value: "wart2-\\\\${POD_NAME",
+					},
+					{
+						Name:  "WART_3",
+						Value: "wart3-\\${POD_NAME",
+					},
+					{
+						Name:  "WART_4",
+						Value: "wart4-$$POD_NAME",
+					},
+				},
+			},
+			masterServiceNs: "nothing",
+			nilLister:       true,
+			expectedEnvs: util.NewStringSet(
+				"TEST_LITERAL=test-test-test",
+				"WART_1=wart1-POD_NAME",
+				"WART_2=wart2-\\\\POD_NAME",
+				"WART_3=wart3-\\POD_NAME",
+				"WART_4=wart4-POD_NAME"),
 		},
 	}
 
