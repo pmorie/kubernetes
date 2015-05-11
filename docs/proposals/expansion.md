@@ -42,18 +42,35 @@ TODO
 
 TODO
 
-### No New Features
+### No new features
 
 TODO: we will not support additional features
 
 ## Proposed Design
 
-TODO
+### Expansion mechanics
 
-## Example: Building a URL
+#### Syntax
 
-TODO
+#### Scope and ordering of substitutions
 
-## Example: Default value for service variable
+#### Unmatched variables
 
-TODO
+#### Unexpected input
+
+#### Malformed input
+
+### Examples
+
+#### Example: Building a URL
+
+#### Example: Default value for service variable
+
+### Implementation changes
+
+#### `pkg/util/expansion` package
+
+#### Kubelet `makeEnvVars` changes
+
+#### Kubelet `runContainer` changes
+
