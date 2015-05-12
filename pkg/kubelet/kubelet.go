@@ -52,6 +52,7 @@ import (
 	"github.com/GoogleCloudPlatform/kubernetes/pkg/types"
 	"github.com/GoogleCloudPlatform/kubernetes/pkg/util"
 	utilErrors "github.com/GoogleCloudPlatform/kubernetes/pkg/util/errors"
+	"github.com/GoogleCloudPlatform/kubernetes/pkg/util/expansion"
 	"github.com/GoogleCloudPlatform/kubernetes/pkg/util/mount"
 	"github.com/GoogleCloudPlatform/kubernetes/pkg/version"
 	"github.com/GoogleCloudPlatform/kubernetes/pkg/volume"
@@ -844,22 +845,10 @@ func (kl *Kubelet) makeEnvironmentVariables(pod *api.Pod, container *api.Contain
 		tmpEnv[value.Name] = runtimeValue
 	}
 
-	// Step 2: expand `$var` and `${var}`
-	mappingFunc := func(input string) string {
-		val, ok := tmpEnv[input]
-		if ok {
-			return val
-		}
-
-		val, ok = serviceEnv[input]
-		if ok {
-			return val
-		}
-
-		return ""
-	}
+	// Step 2: expand variables
+	mappingFunc := expansion.MappingFuncFor(tmpEnv, serviceEnv)
 	for _, value := range container.Env {
-		tmpEnv[value.Name] = os.Expand(tmpEnv[value.Name], mappingFunc)
+		tmpEnv[value.Name] = expansion.Expand(tmpEnv[value.Name], mappingFunc)
 	}
 
 	// Step 3: create the container's env

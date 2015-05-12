@@ -49,8 +49,7 @@ func TestMapReference(t *testing.T) {
 	mapping := MappingFuncFor(declaredEnv, serviceEnv)
 
 	for _, env := range envs {
-		expanded := Expand(env.Value, mapping)
-		declaredEnv[env.Name] = expanded
+		declaredEnv[env.Name] = Expand(env.Value, mapping)
 	}
 
 	expectedEnv := map[string]string{
@@ -81,6 +80,24 @@ func TestMapping(t *testing.T) {
 	}
 	mapping := MappingFuncFor(context)
 
+	doExpansionTest(t, mapping)
+}
+
+func TestMappingDual(t *testing.T) {
+	context := map[string]string{
+		"VAR_A":     "A",
+		"VAR_EMPTY": "",
+	}
+	context2 := map[string]string{
+		"VAR_B": "B",
+		"VAR_C": "C",
+	}
+	mapping := MappingFuncFor(context, context2)
+
+	doExpansionTest(t, mapping)
+}
+
+func doExpansionTest(t *testing.T, mapping func(string) string) {
 	cases := []struct {
 		name     string
 		input    string
@@ -98,8 +115,8 @@ func TestMapping(t *testing.T) {
 		},
 		{
 			name:     "basic escape",
-			input:    "$$(VAR_A)_$(VAR_A)",
-			expected: "$(VAR_A)_A",
+			input:    "$$(VAR_B)_$(VAR_A)",
+			expected: "$(VAR_B)_A",
 		},
 		{
 			name:     "compound escape",
@@ -107,19 +124,29 @@ func TestMapping(t *testing.T) {
 			expected: "$(VAR_A)_$(VAR_B)",
 		},
 		{
+			name:     "mixed in escapes",
+			input:    "f000-$$VAR_A",
+			expected: "f000-$VAR_A",
+		},
+		{
 			name:     "middle",
-			input:    "___$(VAR_A)___",
-			expected: "___A___",
+			input:    "___$(VAR_B)___",
+			expected: "___B___",
 		},
 		{
 			name:     "end",
-			input:    "___$(VAR_A)",
-			expected: "___A",
+			input:    "___$(VAR_C)",
+			expected: "___C",
 		},
 		{
 			name:     "backslash escape ignored",
-			input:    "foo\\$(VAR_A)bar",
-			expected: "foo\\Abar",
+			input:    "foo\\$(VAR_C)bar",
+			expected: "foo\\Cbar",
+		},
+		{
+			name:     "lots of backslashes",
+			input:    "foo\\\\\\\\$(VAR_A)bar",
+			expected: "foo\\\\\\\\Abar",
 		},
 		{
 			name:     "empty var",
@@ -150,6 +177,56 @@ func TestMapping(t *testing.T) {
 			name:     "undefined vars are passed through",
 			input:    "$(VAR_DNE)",
 			expected: "$(VAR_DNE)",
+		},
+		{
+			name:     "multiple (even) operators, var undefined",
+			input:    "$$$$$$(BIG_MONEY)",
+			expected: "$$$(BIG_MONEY)",
+		},
+		{
+			name:     "multiple (even) operators, var defined",
+			input:    "$$$$$$(VAR_A)",
+			expected: "$$$(VAR_A)",
+		},
+		{
+			name:     "multiple (odd) operators, var undefined",
+			input:    "$$$$$$$(BIG_MONEY)",
+			expected: "$$$$(BIG_MONEY)",
+		},
+		{
+			name:     "multiple (odd) operators, var defined",
+			input:    "$$$$$$$(VAR_A)",
+			expected: "$$$A",
+		},
+		{
+			name:     "missing open expression",
+			input:    "$VAR_A)",
+			expected: "$VAR_A)",
+		},
+		{
+			name:     "shell syntax ignored",
+			input:    "${VAR_A}",
+			expected: "${VAR_A}",
+		},
+		{
+			name:     "trailing incomplete expression consumed",
+			input:    "$(VAR_B)_______$(A",
+			expected: "B_______A",
+		},
+		{
+			name:     "trailing incomplete expression, no content, is consumed",
+			input:    "$(VAR_C)_______$(",
+			expected: "C_______",
+		},
+		{
+			name:     "operator at end of input string is preserved",
+			input:    "$(VAR_A)foobarzab$",
+			expected: "Afoobarzab$",
+		},
+		{
+			name:     "shell escaped incomplete expr",
+			input:    "foo-\\$(VAR_A",
+			expected: "foo-\\VAR_A",
 		},
 	}
 

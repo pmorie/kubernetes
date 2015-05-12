@@ -20,13 +20,17 @@ const (
 	operator        = '$'
 	openExpression  = '('
 	closeExpression = ')'
-	minimumExprLen  = 3
 )
 
+// syntaxWrap returns the input string wrapped the expansion syntax.
 func syntaxWrap(input string) string {
 	return string(operator) + string(openExpression) + input + string(closeExpression)
 }
 
+// MappingFuncFor returns a mapping function for use with Expand that
+// implements the expansion semantics defined in the expansion spec; it
+// returns the input string wrapped in the expansion syntax if no mapping
+// for the input is found.
 func MappingFuncFor(context ...map[string]string) func(string) string {
 	return func(input string) string {
 		for _, vars := range context {
@@ -40,30 +44,29 @@ func MappingFuncFor(context ...map[string]string) func(string) string {
 	}
 }
 
-// Expand replaces $(var) in the string based on the mapping function.
-//
-// TODO: Doc
+// Expand replaces variable references in the input string according to
+// the expansion spec using the given mapping function to resolve the
+// values of variables.
 func Expand(input string, mapping func(string) string) string {
 	buf := make([]byte, 0, 2*len(input))
 	checkpoint := 0
 	for cursor := 0; cursor < len(input); cursor++ {
-		if input[cursor] == operator && cursor+minimumExprLen < len(input) {
+		if input[cursor] == operator && cursor+1 < len(input) {
 			// Copy the portion of the input string since the last
 			// checkpoint into the buffer
 			buf = append(buf, input[checkpoint:cursor]...)
 
 			// Attempt to read the variable name as defined by the
 			// syntax from the input string
-			read, advance := tryReadVariableName(input[cursor+1:])
+			read, isVar, advance := tryReadVariableName(input[cursor+1:])
 
-			// A read beginning with the operator is a passthrough
-			// where the operator is not meaningful
-			if len(read) > 0 && read[0] != operator {
-				// Apply the mapping to the variable name and copy the
+			if isVar {
+				// We were able to read a variable name correctly;
+				// apply the mapping to the variable name and copy the
 				// bytes into the buffer
 				buf = append(buf, mapping(read)...)
 			} else {
-				// Pass-through; copy the read bytes into the buffer
+				// Not a variable name; copy the read bytes into the buffer
 				buf = append(buf, read...)
 			}
 
@@ -81,26 +84,31 @@ func Expand(input string, mapping func(string) string) string {
 	return string(buf) + input[checkpoint:]
 }
 
-// TODO: doc
-func tryReadVariableName(s string) (string, int) {
-	switch s[0] {
+// tryReadVariableName attempts to read a variable name from the input
+// string and returns the content read from the input, whether that content
+// represents a variable name to perform mapping on, and the number of bytes
+// consumed in the input string.
+//
+// The input string is assumed not to contain the initial operator.
+func tryReadVariableName(input string) (string, bool, int) {
+	switch input[0] {
 	case operator:
 		// Escaped operator; return it.
-		return s[0:1], 1
+		return input[0:1], false, 1
 	case openExpression:
 		// Scan to expression closer
-		for i := 1; i < len(s); i++ {
-			if s[i] == closeExpression {
-				return s[1:i], i + 1
+		for i := 1; i < len(input); i++ {
+			if input[i] == closeExpression {
+				return input[1:i], true, i + 1
 			}
 		}
 
 		// Malformed expression; consume the expression opener
-		return "", 1
+		return "", false, 1
 	default:
 		// Not the beginning of an expression, ie, an operator
 		// that doesn't begin an expression.  Return the operator
 		// and the first run in the string.
-		return (string(operator) + string(s[0])), 1
+		return (string(operator) + string(input[0])), false, 1
 	}
 }
