@@ -17,66 +17,90 @@ limitations under the License.
 package expansion
 
 const (
-	sigil           = '$'
+	operator        = '$'
 	openExpression  = '('
 	closeExpression = ')'
+	minimumExprLen  = 3
 )
+
+func syntaxWrap(input string) string {
+	return string(operator) + string(openExpression) + input + string(closeExpression)
+}
+
+func MappingFuncFor(context ...map[string]string) func(string) string {
+	return func(input string) string {
+		for _, vars := range context {
+			val, ok := vars[input]
+			if ok {
+				return val
+			}
+		}
+
+		return syntaxWrap(input)
+	}
+}
 
 // Expand replaces $(var) in the string based on the mapping function.
 //
 // TODO: Doc
-func Expand(s string, mapping func(string) string) string {
-	buf := make([]byte, 0, 2*len(s))
-	i := 0
-	for j := 0; j < len(s); j++ {
-		if s[j] == sigil && j+1 < len(s) {
-			buf = append(buf, s[i:j]...)
-			name, w := getVariableName(s[j+1:])
-			buf = append(buf, mapping(name)...)
-			j += w
-			i = j + 1
+func Expand(input string, mapping func(string) string) string {
+	buf := make([]byte, 0, 2*len(input))
+	checkpoint := 0
+	for cursor := 0; cursor < len(input); cursor++ {
+		if input[cursor] == operator && cursor+minimumExprLen < len(input) {
+			// Copy the portion of the input string since the last
+			// checkpoint into the buffer
+			buf = append(buf, input[checkpoint:cursor]...)
+
+			// Attempt to read the variable name as defined by the
+			// syntax from the input string
+			read, advance := tryReadVariableName(input[cursor+1:])
+
+			// A read beginning with the operator is a passthrough
+			// where the operator is not meaningful
+			if len(read) > 0 && read[0] != operator {
+				// Apply the mapping to the variable name and copy the
+				// bytes into the buffer
+				buf = append(buf, mapping(read)...)
+			} else {
+				// Pass-through; copy the read bytes into the buffer
+				buf = append(buf, read...)
+			}
+
+			// Advance the cursor in the input string to account for
+			// bytes consumed to read the variable name expression
+			cursor += advance
+
+			// Advance the checkpoint in the input string
+			checkpoint = cursor + 1
 		}
 	}
-	return string(buf) + s[i:]
+
+	// Return the buffer and any remaining unwritten bytes in the
+	// input string.
+	return string(buf) + input[checkpoint:]
 }
 
-// getShellName returns the name that begins the string and the number of bytes
-// consumed to extract it.  If the name is enclosed in {}, it's part of a ${}
-// expansion and two more bytes are needed than the length of the name.
-func getVariableName(s string) (string, int) {
+// TODO: doc
+func tryReadVariableName(s string) (string, int) {
 	switch s[0] {
+	case operator:
+		// Escaped operator; return it.
+		return s[0:1], 1
 	case openExpression:
-		if len(s) > 2 && isShellSpecialVar(s[1]) && s[2] == closeExpression {
-			return s[1:2], 3
-		}
-		// Scan to closing brace
+		// Scan to expression closer
 		for i := 1; i < len(s); i++ {
 			if s[i] == closeExpression {
 				return s[1:i], i + 1
 			}
 		}
-		return "", 1 // Malformed expression: consume the expression opener
-	case sigil:
-		return s[0:1], 1
-	}
-	// Scan alphanumerics.
-	var i int
-	for i = 0; i < len(s) && isAlphaNum(s[i]); i++ {
-	}
-	return s[:i], i
-}
 
-// isShellSpecialVar reports whether the character identifies a special
-// shell variable such as $*.
-func isShellSpecialVar(c uint8) bool {
-	switch c {
-	case '*', '#', '$', '@', '!', '?', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9':
-		return true
+		// Malformed expression; consume the expression opener
+		return "", 1
+	default:
+		// Not the beginning of an expression, ie, an operator
+		// that doesn't begin an expression.  Return the operator
+		// and the first run in the string.
+		return (string(operator) + string(s[0])), 1
 	}
-	return false
-}
-
-// isAlphaNum reports whether the byte is an ASCII letter, number, or underscore
-func isAlphaNum(c uint8) bool {
-	return c == '_' || '0' <= c && c <= '9' || 'a' <= c && c <= 'z' || 'A' <= c && c <= 'Z'
 }

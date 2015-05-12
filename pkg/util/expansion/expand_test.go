@@ -1,0 +1,162 @@
+/*
+Copyright 2014 The Kubernetes Authors All rights reserved.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+package expansion
+
+import (
+	"testing"
+
+	"github.com/GoogleCloudPlatform/kubernetes/pkg/api"
+)
+
+func TestMapReference(t *testing.T) {
+	envs := []api.EnvVar{
+		{
+			Name:  "FOO",
+			Value: "bar",
+		},
+		{
+			Name:  "ZOO",
+			Value: "$(FOO)-1",
+		},
+		{
+			Name:  "BLU",
+			Value: "$(ZOO)-2",
+		},
+	}
+
+	declaredEnv := map[string]string{
+		"FOO": "bar",
+		"ZOO": "$(FOO)-1",
+		"BLU": "$(ZOO)-2",
+	}
+
+	serviceEnv := map[string]string{}
+
+	mapping := MappingFuncFor(declaredEnv, serviceEnv)
+
+	for _, env := range envs {
+		expanded := Expand(env.Value, mapping)
+		declaredEnv[env.Name] = expanded
+	}
+
+	expectedEnv := map[string]string{
+		"FOO": "bar",
+		"ZOO": "bar-1",
+		"BLU": "bar-1-2",
+	}
+
+	for k, v := range expectedEnv {
+		if e, a := v, declaredEnv[k]; e != a {
+			t.Errorf("Expected %v, got %v", e, a)
+		} else {
+			delete(declaredEnv, k)
+		}
+	}
+
+	if len(declaredEnv) != 0 {
+		t.Errorf("Unexpected keys in declared env: %v", declaredEnv)
+	}
+}
+
+func TestMapping(t *testing.T) {
+	context := map[string]string{
+		"VAR_A":     "A",
+		"VAR_B":     "B",
+		"VAR_C":     "C",
+		"VAR_EMPTY": "",
+	}
+	mapping := MappingFuncFor(context)
+
+	cases := []struct {
+		name     string
+		input    string
+		expected string
+	}{
+		{
+			name:     "basic",
+			input:    "$(VAR_A)-1",
+			expected: "A-1",
+		},
+		{
+			name:     "compound",
+			input:    "$(VAR_A)_$(VAR_B)_$(VAR_C)",
+			expected: "A_B_C",
+		},
+		{
+			name:     "basic escape",
+			input:    "$$(VAR_A)_$(VAR_A)",
+			expected: "$(VAR_A)_A",
+		},
+		{
+			name:     "compound escape",
+			input:    "$$(VAR_A)_$$(VAR_B)",
+			expected: "$(VAR_A)_$(VAR_B)",
+		},
+		{
+			name:     "middle",
+			input:    "___$(VAR_A)___",
+			expected: "___A___",
+		},
+		{
+			name:     "end",
+			input:    "___$(VAR_A)",
+			expected: "___A",
+		},
+		{
+			name:     "backslash escape ignored",
+			input:    "foo\\$(VAR_A)bar",
+			expected: "foo\\Abar",
+		},
+		{
+			name:     "empty var",
+			input:    "foo$(VAR_EMPTY)bar",
+			expected: "foobar",
+		},
+		{
+			name:     "unterminated expression",
+			input:    "foo$(VAR_Awhoops!",
+			expected: "fooVAR_Awhoops!",
+		},
+		{
+			name:     "expression without operator",
+			input:    "f00__(VAR_A)__",
+			expected: "f00__(VAR_A)__",
+		},
+		{
+			name:     "shell special vars pass through",
+			input:    "$?_boo_$!",
+			expected: "$?_boo_$!",
+		},
+		{
+			name:     "bare operators are ignored",
+			input:    "$VAR_A",
+			expected: "$VAR_A",
+		},
+		{
+			name:     "undefined vars are passed through",
+			input:    "$(VAR_DNE)",
+			expected: "$(VAR_DNE)",
+		},
+	}
+
+	for _, tc := range cases {
+		expanded := Expand(tc.input, mapping)
+		if e, a := tc.expected, expanded; e != a {
+			t.Errorf("%v: expected %q, got %q", tc.name, e, a)
+		}
+	}
+}
