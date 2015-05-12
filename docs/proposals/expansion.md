@@ -2,8 +2,7 @@
 
 ## Abstract
 
-A proposal for the expansion of environment variables using a restricted form of shell `${var}`
-syntax.
+A proposal for the expansion of environment variables using a simple `$(var)` syntax.
 
 ## Motivation
 
@@ -17,7 +16,7 @@ the command.  This has a number of drawbacks:
 2.  Wrapper scripts make it harder to use images as base images
 3.  Wrapper scripts increase coupling to kubernetes
 
-Goals of this design:
+## Goals
 
 1.  Define the syntax format
 2.  Define the scoping and ordering of substitutions
@@ -28,19 +27,24 @@ Goals of this design:
 
 *  This design should describe the simplest possible syntax to accomplish the use-cases
 *  Expansion syntax will never support more complicated shell-like behaviors such as default values
-   (viz: `${VARIABLE_NAME:"default"}`), inline substitution, etc.
+   (viz: `$(VARIABLE_NAME:"default")`), inline substitution, etc.
 
 ## Use Cases
 
-TODO
+1.  As a user, I want to compose new environment variables for a container using a substitution
+    syntax.
+1.  As a user, I want to substitute environment variables into a container's comman
+1.  As a user, I want to do the above without requiring the container's image to have a shell
 
 ## Design Considerations
 
-TODO
+### What should the syntax be?
 
-### Which sigils?
-
-TODO
+The exact syntax for variable expansion has a large impact on how users perceive and relate to the
+feature.  We considered implementing a very restrictive subset of the shell `${var}` syntax.  This
+is an attractive option on some level, because many people are familiar with this syntax.  However,
+this syntax also has a large number of lesser known features such as the ability to provide
+default values for unset variables, perform inline substitution, etc.
 
 ### No new features
 
