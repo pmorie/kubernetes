@@ -56,7 +56,8 @@ Kubelet volume directory if SELinux is enabled.
 
 There is a [proposed change](https://github.com/GoogleCloudPlatform/kubernetes/pull/9844) to the
 EmptyDir plugin that adds SELinux relabeling capabilities to that plugin, which is also carried as a
-patch in [OpenShift](https://github.com/openshift/origin).
+patch in [OpenShift](https://github.com/openshift/origin).  It is preferable to solve the problem
+in general of handling SELinux in kubernetes to merging this PR.
 
 ### Docker
 
@@ -176,12 +177,31 @@ policy on certain systems.
 
 The system needs to be able to:
 
+1.  Model whether SELinux integration is expected for any pods
 1.  Model correctly which volumes require ownership / SELinux label management
 1.  Determine the correct ownership and SELinux context of each volume in a pod if required
 1.  Set the ownership and permissions on volumes when required
 1.  Relabel volumes with the correct SELinux context when required
 
-### What requires modeling?
+### Modeling whether SELinux integration is expected within the cluster
+
+Currently, the SELinux support in kubernetes is essentially optional and is driven by whether
+SELinux is enabled on any particular node.  It should be possible for cluster operators to enforce
+that SELinux is enabled if SELinux integration is expected by the cluster.  If SELinux integration
+is expected and SELinux is not enabled on a node, the Kubelet should not start pods.
+
+There should be a cluster-wide capability that controls whether SELinux integration is enabled in
+the cluster.  Cluster operators generally either run SELinux or they don't; we do not know of any
+cases where an operator wants to have SELinux enforcing on some nodes in a cluster and not on
+others.
+
+There are a couple possibilities for what the behavior of the system should be in this case:
+
+1.  The kubelet could validate that SELinux is enabled at start-up and fail to start if SELinux is
+    expected but not enabled
+2.  The kubelet could create an event for each pod.
+
+### Modeling whether a volume requires ownership/label management
 
 In order to understand what needs to be modeled, we'll need to examine the various facets of
 ownership and SELinux labeling that are required.  For now, let's establish that the types of
@@ -322,6 +342,35 @@ Our proposed design should minimize code for handling ownership and SELinux requ
 
 1.  volume plugins
 2.  the kubelet
+
+### Cluster capability
+
+A new `EnableSELinuxIntegration` capability should be added to the `capabilities.Capabilities`
+struct:
+
+```go
+// Capabilities defines the set of capabilities available within the system.
+// For now these are global.  Eventually they may be per-user
+type Capabilities struct {
+    // descriptions omitted for brevity
+    AllowPrivileged bool
+    HostNetworkSources []string
+    PerConnectionBandwidthLimitBytesPerSec int64
+
+    // EnableSELinuxIntegration controls whether SELinux integration
+    // is expected from Kubernetes
+    EnableSELinuxIntegration bool
+}
+```
+
+There should be validations added to ensure that if SELinux integration is not enabled, pods cannot
+be created with SELinux contexts set.  The Kubelet should be modified so that pods are not started
+if this capability is set and SELinux is not enabled on the node.  Options for how to handle this
+case:
+
+1.  Validate during Kubelet bootstrap and fail the Kubelet start
+2.  Start the Kubelet but report `NotReady` status to the API server
+3.  Start the Kubelet but create events when pods are scheduled, and fail to start pods
 
 ### API changes
 
