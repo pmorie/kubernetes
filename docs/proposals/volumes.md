@@ -26,13 +26,8 @@ Goals of this design:
     1.  The volume is owned by the container's effective UID and has permissions `07D0`
     2.  The volume is owned by the container's effective GID or one of its supplemental groups and
         has permissions `0D70`
-3.  Read-only usability of a volume from a container is defined as one of:
-    1.  The volume is not owned by the container and has permissions `0DD5`
-    2.  The volume is owned by the container's effective UID and has permissions `05DD`
-    3.  The volume is owned the container's effective GID or one of its supplemental groups and has
-        permissions `0D5D`
-4.  Volume plugins should not have to handle setting permissions on volumes
-5.  Volume plugins should not have to handle SELinux unless it is unavoidable during volume setup
+3.  Volume plugins should not have to handle setting permissions on volumes
+4.  Volume plugins should not have to handle SELinux unless it is unavoidable during volume setup
 5.  We will not support securing containers within a pod from one another
 
 ## Current State Overview
@@ -107,20 +102,23 @@ and allocates a unique MCS label per pod.
 
 ## Use Cases
 
-1.  As a user, I want the system to set ownership and permissions on volumes correctly to enabled
+1.  As a user, I want the system to set ownership and permissions on volumes correctly to enable
 the following scenarios:
     1.  All containers running as root
     4.  All containers running as the same non-root user
     5.  Multiple containers running as a mix of root and non-root users
 2.  As a user, I want all use-cases to work properly on systems where SELinux is enabled
+3.  As a cluster operator, I want to support securing pods from one another using SELinux
+    automatically when SELinux integration is enabled in a cluster
 
 ### Ownership and permissions
 
 #### All containers running as root
 
 For volumes that only need to be used by root, no action needs to be taken to change ownership or
-permissions.  For situations where read-only access to a shared volume is required from one or more
-containers, the `VolumeMount`s in those containers should have the `readOnly` field set.
+permissions, but setting the ownership based on the supplemental group shared by all containers in a
+pod will also work.  For situations where read-only access to a shared volume is required from one
+or more containers, the `VolumeMount`s in those containers should have the `readOnly` field set.
 
 #### All containers running as a single non-root user
 
@@ -143,9 +141,9 @@ This workaround has significant drawbacks:
 2.  The user experience is poor; it requires changing Dockerfile, adding a layer, or modifying the
     container's command
 
-Some users have manage the ownership of distributed file system volumes on the server side.  In this
-scenario, the UID of the container using the volume is known in advance.  The ownership of the
-volume is set to match the container's UID on the server side.
+Some cluster operators manage the ownership of distributed file system volumes on the server side.
+In this scenario, the UID of the container using the volume is known in advance.  The ownership of
+the volume is set to match the container's UID on the server side.
 
 #### Containers running as a mix of root and non-root users
 
@@ -248,37 +246,26 @@ there should be no need (or way) to specify whether ownership management is requ
 Conversely there must be a way to specify this for volume types where it depends on the user's
 needs.
 
-### Determining correct ownership
+### Ownership management
 
-There are two components of ownership management:
+Using the approach of a pod-level supplemental group to own volumes solves the problem in any of the
+cases of UID/GID combinations within a pod.  Kubernetes should allocate a unique group for each pod
+so that a pod's volumes are usable by that pod's containers, but not by containers of another pod.
 
-1.  When does Kubernetes need to manage the ownership of a volume?
-2.  How does Kubernetes determine the ownership of a volume?
+The supplemental group used to share volumes must be unique in a cluster.  If uniqueness is enforced
+at the host level, pods from one host may be able to use distributed filesystems meant for pods on
+another host.
 
-#### When to determine ownership
+An admission controller could handle allocating groups for each pod and setting the group in the
+pod's security context.
+
+#### When to manage ownership
 
 Whether Kubernetes should manage the ownership of a volume for a distributed filesystem depends upon
 both the file system type and the cluster operator's policy.  For example:
 
 1.  Some organizations will manage ownership of volumes externally to the cluster
 2.  It is not possible to securely `chown` or `chmod` paths within some distributed filesystems
-
-#### How to determine ownership
-
-The Kubelet must analyze the pod spec to determine which UIDs need to use which volumes.  If a
-container's security context's `RunAsUser` field is not set, the Kubelet must inspect the image via
-the container runtime to determine which UID the image will run as.  Once the list of UIDs that need
-to use a volume is known, the kubelet can determine which ownership and permissions should be used
-to make the volume functional.
-
-If a volume is used only by a single UID within the pod, the ownership can be set to that UID.
-Otherwise, the volume should be owned by a group and the containers run in that group.
-
-If a non-numeric user is specified by an image, the behavior of container runtimes is to look up the
-UID from the container's `/etc/passwd` file.  It is not feasible for the kubelet to make this
-determination; we may not be able to correctly support non-numeric users in image metadata.  If a
-cluster operator allows users to create pods with images that specify non-numeric users, the system
-must use supplemental groups to make volumes shareable.
 
 ### Setting ownership and permissions on volumes
 
@@ -287,6 +274,12 @@ operations on the host's filesystem.  For some distributed file system volumes, 
 on remote block devices, `chown` and `chmod` applied locally will also work correctly.  File systems
 based on RPC, however, may not support client-side `chown` and `chmod`.  The system would need to
 schedule the `chown` and `chmod` operations to happen on the server side for these volumes.
+
+#### Allocating MCS Labels
+
+If SELinux integration is enabled, Kubernetes should be able to allocate a unique MCS label for each
+namespace in the system.  Downstream systems such as OpenShift should be able to substitute their
+own logic for MCS label allocation.
 
 #### A note on `chown`, `chmod`, and distributed filesystems
 
@@ -388,8 +381,12 @@ security proposal deals with this in detail.
 
 The pod-level supplemental group is necessary to capture groups that cut across all containers in a
 pod, which is the simplest way to guarantee that all arbitrary combinations of UID/GIDs in
-containers can share a volume.  The pod-level security context proposal also deals with this change
-in detail.
+containers can share a volume.  The
+[pod-level security context proposal](https://github.com/kubernetes/kubernetes/pull/12823) also
+deals with this change in detail.
+
+TODO: do we really need to have the pod-level supplemental group in the API, or can this be 100%
+handled on at the node level by the Kubelet?
 
 Finally, we must have a clear way for users to indicate that Kubernetes should manage ownership and
 labeling of a volume, when it is possible.  For this, the `VolumeSource` should have a new field,
@@ -405,6 +402,10 @@ particular volume requires ownership and label management:
     field of the volume source and the SELinux support of that volume type.
 
 TODO: persistent volumes
+
+### Supplemental group allocator and admission controller
+
+TODO
 
 ### Kubelet changes
 
