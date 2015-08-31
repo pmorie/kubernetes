@@ -249,12 +249,13 @@ needs.
 ### Ownership management
 
 Using the approach of a pod-level supplemental group to own volumes solves the problem in any of the
-cases of UID/GID combinations within a pod.  Kubernetes should allocate a unique group for each pod
-so that a pod's volumes are usable by that pod's containers, but not by containers of another pod.
+cases of UID/GID combinations within a pod. Since this is the simplest approach that handles all
+use-cases, our solution will be made in terms of it.
 
-The supplemental group used to share volumes must be unique in a cluster.  If uniqueness is enforced
-at the host level, pods from one host may be able to use distributed filesystems meant for pods on
-another host.
+Eventually, Kubernetes should allocate a unique group for each pod so that a pod's volumes are
+usable by that pod's containers, but not by containers of another pod.  The supplemental group used
+to share volumes must be unique in a multitenant cluster.  If uniqueness is enforced at the host
+level, pods from one host may be able to use distributed filesystems meant for pods on another host.
 
 An admission controller could handle allocating groups for each pod and setting the group in the
 pod's security context.
@@ -336,6 +337,18 @@ Our proposed design should minimize code for handling ownership and SELinux requ
 1.  volume plugins
 2.  the kubelet
 
+### Deferral: supplemental groups and mcs label allocation
+
+Our short-term goal is to facilitate volume sharing and isolation with SELinux and expose the
+primitives for higher level composition; making these automatic is a longer-term goal.  Allocating
+groups and MCS labels are fairly complex problems in their own right, and so our proposal will not
+encompass either of these topics.  There are several problems that the solution for allocation
+depends on:
+
+1.  Users and groups in Kubernetes
+2.  General auth policy in Kubernetes
+3.  [security policy](https://github.com/GoogleCloudPlatform/kubernetes/pull/7893)
+
 ### Cluster capability
 
 A new `EnableSELinuxIntegration` capability should be added to the `capabilities.Capabilities`
@@ -402,10 +415,6 @@ particular volume requires ownership and label management:
     field of the volume source and the SELinux support of that volume type.
 
 TODO: persistent volumes
-
-### Supplemental group allocator and admission controller
-
-TODO
 
 ### Kubelet changes
 
