@@ -29,6 +29,9 @@ Goals of this design:
 3.  Volume plugins should not have to handle setting permissions on volumes
 4.  Volume plugins should not have to handle SELinux unless it is unavoidable during volume setup
 5.  We will not support securing containers within a pod from one another
+6.  We will not design to support multiple processes running in a single container as different
+    UIDs; use cases that require work by different UIDs should be divided into different pods for
+    each UID
 
 ## Current State Overview
 
