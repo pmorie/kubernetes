@@ -387,47 +387,151 @@ There are a couple factors to consider for the API:
 
 1.  Currently, it is possible to specify a different SELinux context for each container in a pod
 2.  There must be a way to specify a supplemental group that all containers in a pod are part of
-3.  There should be a uniform way to specify in the API that a volume requires ownership / label
-    management
 
 As stated in the assumptions of this proposal, we will not secure containers in a pod from one
 another.  This greatly simplifies the story for SELinux -- we can make the SELinux context uniform
-across the containers in a pod and remove it from the container level entirely.  The pod-level
-security proposal deals with this in detail.
+across the containers in a pod and remove it from the container level entirely.
 
 The pod-level supplemental group is necessary to capture groups that cut across all containers in a
 pod, which is the simplest way to guarantee that all arbitrary combinations of UID/GIDs in
-containers can share a volume.  The
-[pod-level security context proposal](https://github.com/kubernetes/kubernetes/pull/12823) also
-deals with this change in detail.
+containers can share a volume.
 
-TODO: do we really need to have the pod-level supplemental group in the API, or can this be 100%
-handled on at the node level by the Kubelet?
-
-Finally, we must have a clear way for users to indicate that Kubernetes should manage ownership and
-labeling of a volume, when it is possible.  For this, the `VolumeSource` should have a new field,
-`Manage`, and the volume `Builder` interface have two new methods, `RequiresOwnershipManagement()`
-and `RequiresLabelManagement()`.
-
-The `Builder` implementation for each type will be responsible for correctly indicating whether a
-particular volume requires ownership and label management:
-
-1.  The hostPath builder should always return `false` for both management types
-2.  The empty dir builder and builders for plugins derived from it should always return `true`
-3.  The builders for distributed file systems should return the correct values based on the `Manage`
-    field of the volume source and the SELinux support of that volume type.
+The [pod-level security context proposal](https://github.com/kubernetes/kubernetes/pull/12823)
+describes the details of these two changes to the pod API.
 
 TODO: persistent volumes
 
 ### Kubelet changes
 
 The Kubelet should be modified to perform ownership and label management when required for a volume.
-The `mountExternalVolumes` method should call `RequiresOwnershipManagement()` and
-`RequiresLabelManagement()` on the builder for each volume to determine whether a local `chcon`,
-`chmod`, or `chcon` operation is required.
 
-Container runtime implementations should receive information about whether relabeling for volumes
-should be performed.  The docker runtime implementation should be modified to support relabeling.
+#### Managing ownership of volumes in the Kubelet
+
+For ownership management, the criteria are:
+
+1.  The pod-level supplemental group is populated
+2.  The volume type supports ownership management
+3.  Kubelet ownership management is enabled for the volume type
+
+The `volume.Builder` interface should have a new method added that indicates whether the plugin
+supports ownership management:
+
+```
+type Builder inteface {
+    // other methods omitted
+    SupportsOwnershipManagement() bool
+}
+```
+
+The Kubelet should receive a new parameter determining whether ownership management is supported
+for each distributed file system volume type:
+
+TODO KubeletArgs
+
+Logic should be added to the `mountExternalVolumes` method that runs a local `chgrp` and `chmod` if
+the pod-level supplemental group is set and the volume supports ownership management:
+
+```go
+type ChgrpRunner interface {
+    Chgrp(path string, gid int) error
+}
+
+type ChmodRunner interface {
+    Chmod(path string, mode os.FileMode) error
+}
+
+type Kubelet struct {
+    chgrpRunner ChgrpRunner
+    chmodRunner ChmodRunner
+}
+
+func (kl *Kubelet) mountExternalVolumes(pod *api.Pod) (kubecontainer.VolumeMap, error) {
+    podSupplementalGroup = pod.PodSecurityContext.PodSupplementalGroup()
+    podSupplementalGroupSet := false
+    if podSupplementalGroup != "" {
+        podSupplementalGroupSet = true
+    }
+
+    podVolumes := make(kubecontainer.VolumeMap)
+
+    for i := range pod.Spec.Volumes {
+        volSpec := &pod.Spec.Volumes[i]
+
+        rootContext, err := kl.getRootDirContext()
+        if err != nil {
+            return nil, err
+        }
+
+        // Try to use a plugin for this volume.
+        internal := volume.NewSpecFromVolume(volSpec)
+        builder, err := kl.newVolumeBuilderFromPlugins(internal, pod, volume.VolumeOptions{RootContext: rootContext}, kl.mounter)
+        if err != nil {
+            glog.Errorf("Could not create volume builder for pod %s: %v", pod.UID, err)
+            return nil, err
+        }
+        if builder == nil {
+            return nil, errUnsupportedVolumeType
+        }
+        err = builder.SetUp()
+        if err != nil {
+            return nil, err
+        }
+
+        if builder.SupportsOwnershipManagement() && podSupplementalGroupSet {
+            err = kl.chgrpRunner.Chgrp(builder.GetPath(), podSupplementalGroup)
+            if err != nil {
+                return nil, err
+            }
+
+            err = kl.chmodRunner.Chmod(builder.GetPath(), os.FileMode(0770))
+            if err != nil {
+                return nil, err
+            }
+        }
+
+        podVolumes[volSpec.Name] = builder
+    }
+    return podVolumes, nil
+}
+```
+
+#### Managing labels in the Kubelet
+
+The criteria to activate the kubelet label management for volumes are:
+
+1.  SELinux integration is enabled
+2.  SELinux is enabled on the node
+3.  The pod-level SELinux context is populated
+4.  The volume plugin supports label management
+5.  Kubelet label management is enabled for the volume
+
+The `volume.Builder` interface should have a new method added that indicates whether the plugin
+supports label management:
+
+```
+type Builder inteface {
+    // other methods omitted
+    SupportsLabelManagement() bool
+}
+```
+
+Individual volume plugins are responsible for correctly reporting whether they support label
+management in the kubelet.  As with ownership management, the Kubelet should receive new arguments
+that determine whether each *applicable* volume type (distributed filesystems) have Kubelet label
+management enabled.
+
+Volume types such as NFS that support SELinux labeling only at mount time should be modified to
+pass the SELinux context at mount time.  These plugins must be injected with and respect the
+enablement setting for the labeling for the volume type.
+
+In order to limit the amount of label management code in Kubernetes, we propose that label
+management be a function of the container runtime implementations.  Initially, we will modify the
+docker runtime implementation to correctly set the `:Z` flag on the appropriate bind-mounts in
+order to accomplish generic label management for docker containers.
+
+### Examples
+
+TODO
 
 <!-- BEGIN MUNGE: GENERATED_ANALYTICS -->
 [![Analytics](https://kubernetes-site.appspot.com/UA-36037335-10/GitHub/docs/proposals/volumes.md?pixel)]()
