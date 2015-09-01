@@ -170,11 +170,24 @@ The `ContainerSecurityContext` type models the security settings that specified 
 
 ```go
 type ContainerSecurityContext struct {
-    Capabilities              *Capabilities
-    Privileged                *bool
-    UserID                    *int64
-    GroupID                   *int64
+    // The kernel capabilities the container runs with
+    Capabilities *Capabilities
+
+    // Whether this is a privileged container
+    Privileged *bool
+
+    // The primary UID of the container
+    UserID *int64
+
+    // The primary GID of the container
+    GroupID *int64
+
+    // Additional supplemental groups the container should run as
+    // (does not override pod-level supplemental group)
     SupplementalGroupIDs     []int64
+
+    // Validate that container shouldn't run as UID 0 if
+    // we should delegate to the image's default UID
     RunAsNonRoot              bool
 }
 ```
