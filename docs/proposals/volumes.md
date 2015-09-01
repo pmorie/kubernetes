@@ -443,6 +443,8 @@ type ChmodRunner interface {
 type Kubelet struct {
     chgrpRunner ChgrpRunner
     chmodRunner ChmodRunner
+
+    ownershipManagementEnabled bool
 }
 
 func (kl *Kubelet) mountExternalVolumes(pod *api.Pod) (kubecontainer.VolumeMap, error) {
@@ -477,7 +479,9 @@ func (kl *Kubelet) mountExternalVolumes(pod *api.Pod) (kubecontainer.VolumeMap, 
             return nil, err
         }
 
-        if builder.SupportsOwnershipManagement() && podSupplementalGroupSet {
+        if kl.ownershipManagementEnabled &&
+           builder.SupportsOwnershipManagement() &&
+           podSupplementalGroupSet {
             err = kl.chgrpRunner.Chgrp(builder.GetPath(), podSupplementalGroup)
             if err != nil {
                 return nil, err
@@ -520,14 +524,16 @@ management in the kubelet.  As with ownership management, the Kubelet should rec
 that determine whether each *applicable* volume type (distributed filesystems) have Kubelet label
 management enabled.
 
-Volume types such as NFS that support SELinux labeling only at mount time should be modified to
-pass the SELinux context at mount time.  These plugins must be injected with and respect the
-enablement setting for the labeling for the volume type.
-
 In order to limit the amount of label management code in Kubernetes, we propose that label
 management be a function of the container runtime implementations.  Initially, we will modify the
 docker runtime implementation to correctly set the `:Z` flag on the appropriate bind-mounts in
 order to accomplish generic label management for docker containers.
+
+Volume types such as NFS that support SELinux labeling only at mount time should be modified to
+pass the SELinux context at mount time.  These plugins must be injected with and respect the
+enablement setting for the labeling for the volume type.  The proposed `VolumeConfig` mechanism
+will be used to carry information about label management enablement to the volume plugins that have
+to manage labels individually.
 
 ### Examples
 
