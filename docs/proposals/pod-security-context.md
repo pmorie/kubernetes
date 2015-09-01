@@ -195,11 +195,15 @@ type ContainerSecurityContext struct {
 The `ContainerSecurityContext` type is very similar to the existing `SecurityContext` type, with
 two additions:
 
-1.  The `RunAsGroup` field specifies the GID the container process runs as
-2.  The `RunWithSupplementalGroups` field specifies additional groups the container process should
+1.  The `GroupID` field specifies the GID the container process runs as
+2.  The `SupplementalGroupIDs` field specifies additional groups the container process should
     be in
 
 The addition of these fields enables scenarios where containers share resources via groups.
+
+### Backward compatibility
+
+TODO
 
 ### Kubelet changes
 
