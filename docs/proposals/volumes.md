@@ -416,7 +416,7 @@ For ownership management, the criteria are:
 The `volume.Builder` interface should have a new method added that indicates whether the plugin
 supports ownership management:
 
-```
+```go
 type Builder inteface {
     // other methods omitted
     SupportsOwnershipManagement() bool
@@ -499,7 +499,7 @@ func (kl *Kubelet) mountExternalVolumes(pod *api.Pod) (kubecontainer.VolumeMap, 
 
 The criteria to activate the kubelet label management for volumes are:
 
-1.  SELinux integration is enabled
+1.  SELinux integration is enabled in the cluster
 2.  SELinux is enabled on the node
 3.  The pod-level SELinux context is populated
 4.  The volume plugin supports label management
@@ -508,7 +508,7 @@ The criteria to activate the kubelet label management for volumes are:
 The `volume.Builder` interface should have a new method added that indicates whether the plugin
 supports label management:
 
-```
+```go
 type Builder inteface {
     // other methods omitted
     SupportsLabelManagement() bool
@@ -536,4 +536,3 @@ TODO
 <!-- BEGIN MUNGE: GENERATED_ANALYTICS -->
 [![Analytics](https://kubernetes-site.appspot.com/UA-36037335-10/GitHub/docs/proposals/volumes.md?pixel)]()
 <!-- END MUNGE: GENERATED_ANALYTICS -->
-    
