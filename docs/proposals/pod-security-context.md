@@ -120,6 +120,83 @@ easiest way to share resources among containers running as different UID/primary
 to make them owned by a supplemental group that all containers run as.  Therefore, there should be a
 pod-level supplemental group field that cannot be overridden in containers.
 
+### Backward compatibility
+
+The existing V1 API should be backward compatible with the new API.  Backward compatibility is
+defined as:
+
+1.  Any API call (e.g. a structure POSTed to a REST endpoint) that worked before your change must
+    work the same after your change.
+2.  Any API call that uses your change must not cause problems (e.g. crash or degrade behavior) when
+    issued against servers that do not include your change.
+3.  It must be possible to round-trip your change (convert to different API versions and back) with
+    no loss of information.
+
+This essentially means that we must keep all the existing fields in place in the V1 API and make
+only additive changes.  So, in order to design the correct API changes, we must:
+
+1.  Retain the current container level `SecurityContext`
+2.  Define which fields must be controllable at the container level; this becomes the new 
+    `ContainerSecurityContext`
+3.  Define which fields must be controllable at the pod level; this becomes the new
+    `PodSecurityContext`; fields in the `PodSecurityContext` are one of the following:
+    1.  New fields (SupplementalGroupId)
+    2.  Fields that are currently part of the `PodSpec`
+    3.  Fields that are currently part of the container level `SecurityContext` and are not part
+        of the `ContainerSecurityContext`
+    4.  Fields that are currently part of the container level `SecurityContext` and **are** in the
+        `ContainerSecurityContext` -- these will be fields of the `ContainerDefaults`
+
+Let's break down the fields of the `PodSecurityContext` and examine the backward compatibility rules
+for each class of field:
+
+1.  Fields that are purely additive have no backward compatibility concerns
+2.  For fields that are moving from the `PodSpec` to the `PodSecurityContext`:
+    1.  If the new field is set and the deprecated field is unset, the deprecated field is defaulted
+        to the value of the new field
+    2.  If the deprecated field is set and the new field is unset, the new field is defaulted to the
+        value of the deprecated field
+    3.  If the deprecated field and new field are both set, their values must match
+3.  For fields that are currently part of the `SecurityContext` **and are not** in the
+    `ContainerSecurityContext`:
+    1.  If the new field is set and the deprecated field is unset, the deprecated field is defaulted
+        to the value of the new field in all containers in the pod
+    2.  If the deprecated field is set and has the **same value** in each container and the new
+        field is unset, the new field is set to the value of the deprecated fields
+    3.  If the deprecated field is set and has more than a single value across all containers in a
+        pod, the new field remains unset and the deprecated field takes precedent
+4.  For fields that are currently in the `SecurityContext` **and are** in the
+    `ContainerSecurityContext`:
+    1.  If the field **is set** in the `ContainerDefaults` field of the `PodSecurityContext`, for
+        each container the following conditions apply:
+        1.  If the field is not set in the container's `SecurityContext` or
+            `ContainerSecurityContext` of the container, the deprecated field of the
+            `SecurityContext` is set to the value of the field in the container defaults of the
+            `PodSecurityContext`
+        2.  If the field is set in the `SecurityContext` and **not set** in the container's
+            `ContainerSecurityContext`, the field of the `ContainerSecurityContext` is set to the
+            value of the field in the container defaults of the `PodSecurityContext`
+        3.  If the field is set in the `ContainerSecurityContext` and **not set** in the
+            `SecurityContext`, the field of the `SecurityContext` is set to the value of the field
+            in the container defaults of the `PodSecurityContext`
+        4.  If the field is set in both the `SecurityContext` and `ContainerSecurityContext`, the
+            values of the fields must match
+    2.  If the field **is not set** in the `ContainerDefaults` field of the `PodSecurityContext`,
+        for each container the following conditions apply:
+        1.  If the field is not set in the container's `SecurityContext` or
+            `ContainerSecurityContext` of the container, no field values are altered
+        2.  If the field is set in the `SecurityContext` and **not set** in the container's
+            `ContainerSecurityContext`, the field of the `ContainerSecurityContext` is set to the
+            value of the field in the `SecurityContext`
+        3.  If the field is set in the `ContainerSecurityContext` and **not set** in the
+            `SecurityContext`, the field of the `SecurityContext` is set to the value of the field
+            in the `ContainerSecurityContext`
+        4.  If the field is set in both the `SecurityContext` and `ContainerSecurityContext`, the
+            values of the fields must match
+
+When the V2 pods API is created, we will drop support for the existing container-level
+`SecurityContext`.
+
 ## Proposed Design
 
 The `SecurityContext` type should be replaced by two new, similar types: `PodSecurityContext` and
@@ -138,7 +215,7 @@ type PodSecurityContext struct {
     HostNetwork bool
 
     // Uses the host's IPC namespace proposed in (https://github.com/kubernetes/kubernetes/pull/12470)
-    HostIpc bool
+    HostIPC bool
 
     // The supplemental group ID that will own volumes in this pod and that all containers will run
     // under as a supplemental group
@@ -184,26 +261,23 @@ type ContainerSecurityContext struct {
 
     // Additional supplemental groups the container should run as
     // (does not override pod-level supplemental group)
-    SupplementalGroupIDs     []int64
+    SupplementalGroupIDs []int64
 
     // Validate that container shouldn't run as UID 0 if
     // we should delegate to the image's default UID
-    RunAsNonRoot              bool
+    RunAsNonRoot bool
 }
 ```
 
-The `ContainerSecurityContext` type is very similar to the existing `SecurityContext` type, with
-two additions:
+The `ContainerSecurityContext` type is very similar to the existing `SecurityContext` type; the
+following changes are made:
 
-1.  The `GroupID` field specifies the GID the container process runs as
+1.  The `GroupID` field specifies the primary GID the container process runs as
 2.  The `SupplementalGroupIDs` field specifies additional groups the container process should
-    be in
+    be in (in addition to the pod-level supplemental group)
+3.  SELinux context can no longer be set at the container level
 
-The addition of these fields enables scenarios where containers share resources via groups.
 
-### Backward compatibility
-
-TODO
 
 ### Kubelet changes
 
