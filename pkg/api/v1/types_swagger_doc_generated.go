@@ -940,6 +940,15 @@ func (PodProxyOptions) SwaggerDoc() map[string]string {
 	return map_PodProxyOptions
 }
 
+var map_PodSecurityContext = map[string]string{
+	"hostNetwork":     "Uses the host's network namespace.  If this option is set, the ports that will be used must be specified. Optional: Default to false",
+	"securityContext": "ContainerDefaults hold base security settings that apply to all containers in a pod. Optional.",
+}
+
+func (PodSecurityContext) SwaggerDoc() map[string]string {
+	return map_PodSecurityContext
+}
+
 var map_PodSpec = map[string]string{
 	"":                              "PodSpec is a description of a pod.",
 	"volumes":                       "List of volumes that can be mounted by containers belonging to the pod. More info: http://releases.k8s.io/HEAD/docs/user-guide/volumes.md",
@@ -953,6 +962,7 @@ var map_PodSpec = map[string]string{
 	"serviceAccount":                "DeprecatedServiceAccount is a depreciated alias for ServiceAccountName. Deprecated: Use serviceAccountName instead.",
 	"nodeName":                      "NodeName is a request to schedule this pod onto a specific node. If it is non-empty, the scheduler simply schedules this pod onto that node, assuming that it fits resource requirements.",
 	"hostNetwork":                   "Host networking requested for this pod. Uses the host's network namespace. If this option is set, the ports that will be used must be specified. Default to false.",
+	"securityContext":               "SecurityContext holds pod-level security attributes and base container settings",
 	"imagePullSecrets":              "ImagePullSecrets is an optional list of references to secrets in the same namespace to use for pulling any of the images used by this PodSpec. If specified, these secrets will be passed to individual puller implementations for them to use. For example, in the case of docker, only DockerConfig type secrets are honored. More info: http://releases.k8s.io/HEAD/docs/user-guide/images.md#specifying-imagepullsecrets-on-a-pod",
 }
 

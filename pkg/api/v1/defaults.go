@@ -100,7 +100,7 @@ func addDefaultingFuncs() {
 			if obj.RestartPolicy == "" {
 				obj.RestartPolicy = RestartPolicyAlways
 			}
-			if obj.HostNetwork {
+			if obj.HostNetwork || (obj.SecurityContext != nil && obj.SecurityContext.HostNetwork) {
 				defaultHostNetworkPorts(&obj.Containers)
 			}
 			if obj.TerminationGracePeriodSeconds == nil {
