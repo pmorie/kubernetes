@@ -168,6 +168,18 @@ set.  If a system administrator does not wish to set `virt_use_nfs`, the correct
 passed to the `mount` operation in order for the volume to be usable from a container's SELinux
 policy on certain systems.
 
+#### SELinux context: pod- or container- level?
+
+Currently, SELinux context is specifiable only at the container level.  This is an inconvenient
+factoring for sharing volumes and other SELinux-secured resources between containers because there
+is no way in SELinux to share resources between processes with different MCS labels except to
+remove MCS labels from the shared resource.  This is a big security risk: _any container_ in the
+system can work with a resource which has the same SELinux context as it and no MCS labels.  Since
+we are also not interested in isolating containers in a pod from one another, the SELinux context
+should be shared by all containers in a pod to facilitate isolation from the containers in other
+pods and sharing resources amongst all the containers of a pod.
+
+
 ## Community Design Discussion
 
 - [kubernetes/2630](https://github.com/GoogleCloudPlatform/kubernetes/issues/2630)
@@ -278,12 +290,6 @@ operations on the host's filesystem.  For some distributed file system volumes, 
 on remote block devices, `chown` and `chmod` applied locally will also work correctly.  File systems
 based on RPC, however, may not support client-side `chown` and `chmod`.  The system would need to
 schedule the `chown` and `chmod` operations to happen on the server side for these volumes.
-
-#### Allocating MCS Labels
-
-If SELinux integration is enabled, Kubernetes should be able to allocate a unique MCS label for each
-namespace in the system.  Downstream systems such as OpenShift should be able to substitute their
-own logic for MCS label allocation.
 
 #### A note on `chown`, `chmod`, and distributed filesystems
 
