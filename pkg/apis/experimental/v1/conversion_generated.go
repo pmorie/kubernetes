@@ -496,6 +496,22 @@ func convert_api_PersistentVolumeClaimVolumeSource_To_v1_PersistentVolumeClaimVo
 	return nil
 }
 
+func convert_api_PodSecurityContext_To_v1_PodSecurityContext(in *api.PodSecurityContext, out *v1.PodSecurityContext, s conversion.Scope) error {
+	if defaulting, found := s.DefaultingInterface(reflect.TypeOf(*in)); found {
+		defaulting.(func(*api.PodSecurityContext))(in)
+	}
+	out.HostNetwork = in.HostNetwork
+	if in.ContainerDefaults != nil {
+		out.ContainerDefaults = new(v1.SecurityContext)
+		if err := convert_api_SecurityContext_To_v1_SecurityContext(in.ContainerDefaults, out.ContainerDefaults, s); err != nil {
+			return err
+		}
+	} else {
+		out.ContainerDefaults = nil
+	}
+	return nil
+}
+
 func convert_api_PodTemplateSpec_To_v1_PodTemplateSpec(in *api.PodTemplateSpec, out *v1.PodTemplateSpec, s conversion.Scope) error {
 	if defaulting, found := s.DefaultingInterface(reflect.TypeOf(*in)); found {
 		defaulting.(func(*api.PodTemplateSpec))(in)
@@ -1260,6 +1276,22 @@ func convert_v1_PersistentVolumeClaimVolumeSource_To_api_PersistentVolumeClaimVo
 	}
 	out.ClaimName = in.ClaimName
 	out.ReadOnly = in.ReadOnly
+	return nil
+}
+
+func convert_v1_PodSecurityContext_To_api_PodSecurityContext(in *v1.PodSecurityContext, out *api.PodSecurityContext, s conversion.Scope) error {
+	if defaulting, found := s.DefaultingInterface(reflect.TypeOf(*in)); found {
+		defaulting.(func(*v1.PodSecurityContext))(in)
+	}
+	out.HostNetwork = in.HostNetwork
+	if in.ContainerDefaults != nil {
+		out.ContainerDefaults = new(api.SecurityContext)
+		if err := convert_v1_SecurityContext_To_api_SecurityContext(in.ContainerDefaults, out.ContainerDefaults, s); err != nil {
+			return err
+		}
+	} else {
+		out.ContainerDefaults = nil
+	}
 	return nil
 }
 
@@ -2622,6 +2654,7 @@ func init() {
 		convert_api_ObjectFieldSelector_To_v1_ObjectFieldSelector,
 		convert_api_ObjectMeta_To_v1_ObjectMeta,
 		convert_api_PersistentVolumeClaimVolumeSource_To_v1_PersistentVolumeClaimVolumeSource,
+		convert_api_PodSecurityContext_To_v1_PodSecurityContext,
 		convert_api_PodTemplateSpec_To_v1_PodTemplateSpec,
 		convert_api_Probe_To_v1_Probe,
 		convert_api_RBDVolumeSource_To_v1_RBDVolumeSource,
@@ -2704,6 +2737,7 @@ func init() {
 		convert_v1_ObjectFieldSelector_To_api_ObjectFieldSelector,
 		convert_v1_ObjectMeta_To_api_ObjectMeta,
 		convert_v1_PersistentVolumeClaimVolumeSource_To_api_PersistentVolumeClaimVolumeSource,
+		convert_v1_PodSecurityContext_To_api_PodSecurityContext,
 		convert_v1_PodTemplateSpec_To_api_PodTemplateSpec,
 		convert_v1_Probe_To_api_Probe,
 		convert_v1_RBDVolumeSource_To_api_RBDVolumeSource,

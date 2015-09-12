@@ -367,6 +367,7 @@ func TestSetDefaultNamespace(t *testing.T) {
 }
 
 func TestSetDefaultPodSpecHostNetwork(t *testing.T) {
+	// TODO
 	portNum := 8080
 	s := versioned.PodSpec{}
 	s.HostNetwork = true

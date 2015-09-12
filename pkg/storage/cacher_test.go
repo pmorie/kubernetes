@@ -62,6 +62,7 @@ func makeTestPod(name string) *api.Pod {
 			TerminationGracePeriodSeconds: &gracePeriod,
 			DNSPolicy:                     api.DNSClusterFirst,
 			RestartPolicy:                 api.RestartPolicyAlways,
+			SecurityContext:               &api.PodSecurityContext{ContainerDefaults: &api.SecurityContext{}},
 		},
 	}
 }

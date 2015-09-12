@@ -138,6 +138,7 @@ func TestDefaultErrorFunc(t *testing.T) {
 			RestartPolicy:                 api.RestartPolicyAlways,
 			DNSPolicy:                     api.DNSClusterFirst,
 			TerminationGracePeriodSeconds: &grace,
+			SecurityContext:               &api.PodSecurityContext{ContainerDefaults: &api.SecurityContext{}},
 		},
 	}
 	handler := util.FakeHandler{

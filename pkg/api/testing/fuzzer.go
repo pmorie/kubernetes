@@ -31,6 +31,7 @@ import (
 	"k8s.io/kubernetes/pkg/fields"
 	"k8s.io/kubernetes/pkg/labels"
 	"k8s.io/kubernetes/pkg/runtime"
+	"k8s.io/kubernetes/pkg/securitycontext"
 	"k8s.io/kubernetes/pkg/types"
 	"k8s.io/kubernetes/pkg/util"
 
@@ -91,14 +92,32 @@ func FuzzerFor(t *testing.T, version string, src rand.Source) *fuzz.Fuzzer {
 			j.LabelSelector, _ = labels.Parse("a=b")
 			j.FieldSelector, _ = fields.ParseSelector("a=b")
 		},
-		func(j *api.PodSpec, c fuzz.Continue) {
-			c.FuzzNoCustom(j)
+		func(s *api.PodSpec, c fuzz.Continue) {
+			c.FuzzNoCustom(s)
 			// has a default value
 			ttl := int64(30)
 			if c.RandBool() {
 				ttl = int64(c.Uint32())
 			}
-			j.TerminationGracePeriodSeconds = &ttl
+			s.TerminationGracePeriodSeconds = &ttl
+
+			hostNetwork := c.RandBool()
+			s.SecurityContext.HostNetwork = hostNetwork
+
+			// TODO: synthesize defaults
+
+			synthesizedDefaults := securitycontext.SynthesizeContainerDefaults(s)
+			if s.SecurityContext == nil {
+				s.SecurityContext = new(api.PodSecurityContext)
+			}
+			if s.SecurityContext.ContainerDefaults == nil {
+				s.SecurityContext.ContainerDefaults = new(api.SecurityContext)
+			}
+			*s.SecurityContext.ContainerDefaults = *synthesizedDefaults
+		},
+		func(s *api.PodSecurityContext, c fuzz.Continue) {
+			s.ContainerDefaults = &api.SecurityContext{}
+			c.Fuzz(s.ContainerDefaults)
 		},
 		func(j *api.PodPhase, c fuzz.Continue) {
 			statuses := []api.PodPhase{api.PodPending, api.PodRunning, api.PodFailed, api.PodUnknown}
@@ -282,6 +301,9 @@ func FuzzerFor(t *testing.T, version string, src rand.Source) *fuzz.Fuzzer {
 				ev.ValueFrom.FieldRef.APIVersion = versions[c.Rand.Intn(len(versions))]
 				ev.ValueFrom.FieldRef.FieldPath = c.RandString()
 			}
+		},
+		func(sc *api.PodSecurityContext, c fuzz.Continue) {
+			// TODO
 		},
 		func(sc *api.SecurityContext, c fuzz.Continue) {
 			c.FuzzNoCustom(sc) // fuzz self without calling this function again

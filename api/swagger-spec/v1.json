@@ -12492,6 +12492,10 @@
       "type": "boolean",
       "description": "Host networking requested for this pod. Uses the host's network namespace. If this option is set, the ports that will be used must be specified. Default to false."
      },
+     "securityContext": {
+      "$ref": "v1.PodSecurityContext",
+      "description": "SecurityContext holds pod-level security attributes and base container settings"
+     },
      "imagePullSecrets": {
       "type": "array",
       "items": {
@@ -13036,6 +13040,18 @@
      "level": {
       "type": "string",
       "description": "Level is SELinux level label that applies to the container. More info: http://releases.k8s.io/HEAD/docs/user-guide/labels.md"
+     }
+    }
+   },
+   "v1.PodSecurityContext": {
+    "id": "v1.PodSecurityContext",
+    "properties": {
+     "hostNetwork": {
+      "type": "boolean",
+      "description": "Uses the host's network namespace.  If this option is set, the ports that will be used must be specified. Optional: Default to false"
+     },
+     "containerDefaults": {
+      "$ref": "v1.SecurityContext"
      }
     }
    },

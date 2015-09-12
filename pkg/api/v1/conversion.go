@@ -22,6 +22,7 @@ import (
 
 	"k8s.io/kubernetes/pkg/api"
 	"k8s.io/kubernetes/pkg/conversion"
+	"k8s.io/kubernetes/pkg/securitycontext"
 )
 
 func addConversionFuncs() {
@@ -281,7 +282,17 @@ func convert_api_PodSpec_To_v1_PodSpec(in *api.PodSpec, out *PodSpec, s conversi
 	// DeprecatedServiceAccount is an alias for ServiceAccountName.
 	out.DeprecatedServiceAccount = in.ServiceAccountName
 	out.NodeName = in.NodeName
-	out.HostNetwork = in.HostNetwork
+	if in.SecurityContext != nil {
+		out.SecurityContext = new(PodSecurityContext)
+		if err := convert_api_PodSecurityContext_To_v1_PodSecurityContext(in.SecurityContext, out.SecurityContext, s); err != nil {
+			return err
+		}
+
+		// PodSpec.HostNetwork should populate out.SecurityContext.HostNetwork
+		if in.SecurityContext.HostNetwork {
+			out.HostNetwork = in.SecurityContext.HostNetwork
+		}
+	}
 	if in.ImagePullSecrets != nil {
 		out.ImagePullSecrets = make([]LocalObjectReference, len(in.ImagePullSecrets))
 		for i := range in.ImagePullSecrets {
@@ -348,7 +359,59 @@ func convert_v1_PodSpec_To_api_PodSpec(in *PodSpec, out *api.PodSpec, s conversi
 		out.ServiceAccountName = in.DeprecatedServiceAccount
 	}
 	out.NodeName = in.NodeName
-	out.HostNetwork = in.HostNetwork
+	if in.SecurityContext != nil {
+		out.SecurityContext = new(api.PodSecurityContext)
+		if err := convert_v1_PodSecurityContext_To_api_PodSecurityContext(in.SecurityContext, out.SecurityContext, s); err != nil {
+			return err
+		}
+	}
+	if out.SecurityContext == nil {
+		out.SecurityContext = new(api.PodSecurityContext)
+	}
+	out.SecurityContext.HostNetwork = in.HostNetwork || (in.SecurityContext != nil && in.SecurityContext.HostNetwork)
+	if in.SecurityContext.ContainerDefaults != nil {
+		for i := range out.Containers {
+			if out.Containers[i].SecurityContext == nil {
+				out.Containers[i].SecurityContext = new(api.SecurityContext)
+				if err := convert_v1_SecurityContext_To_api_SecurityContext(in.SecurityContext.ContainerDefaults, out.Containers[i].SecurityContext, s); err != nil {
+					return err
+				}
+			} else {
+				defaults := in.SecurityContext.ContainerDefaults
+				// Overlay container settings onto defaults
+				if defaults.Capabilities != nil && in.Containers[i].SecurityContext.Capabilities == nil {
+					out.Containers[i].SecurityContext.Capabilities = new(api.Capabilities)
+					if err := convert_v1_Capabilities_To_api_Capabilities(defaults.Capabilities, out.Containers[i].SecurityContext.Capabilities, s); err != nil {
+						return err
+					}
+				}
+				if defaults.Privileged != nil && in.Containers[i].SecurityContext.Privileged == nil {
+					out.Containers[i].SecurityContext.Privileged = new(bool)
+					*out.Containers[i].SecurityContext.Privileged = *defaults.Privileged
+				}
+				if defaults.SELinuxOptions != nil && in.Containers[i].SecurityContext.SELinuxOptions == nil {
+					out.Containers[i].SecurityContext.SELinuxOptions = new(api.SELinuxOptions)
+					if err := convert_v1_SELinuxOptions_To_api_SELinuxOptions(defaults.SELinuxOptions, out.Containers[i].SecurityContext.SELinuxOptions, s); err != nil {
+						return err
+					}
+				}
+				if defaults.RunAsUser != nil && in.Containers[i].SecurityContext.RunAsUser == nil {
+					out.Containers[i].SecurityContext.RunAsUser = new(int64)
+					*out.Containers[i].SecurityContext.RunAsUser = *defaults.RunAsUser
+				}
+				// TODO: should this field become a pointer?
+				if defaults.RunAsNonRoot && !in.Containers[i].SecurityContext.RunAsNonRoot {
+					out.Containers[i].SecurityContext.RunAsNonRoot = true
+				}
+			}
+		}
+	} else {
+		newContainerDefaults := securitycontext.SynthesizeContainerDefaults(out)
+		if newContainerDefaults != nil {
+			out.SecurityContext.ContainerDefaults = new(api.SecurityContext)
+			*out.SecurityContext.ContainerDefaults = *newContainerDefaults
+		}
+	}
 	if in.ImagePullSecrets != nil {
 		out.ImagePullSecrets = make([]api.LocalObjectReference, len(in.ImagePullSecrets))
 		for i := range in.ImagePullSecrets {

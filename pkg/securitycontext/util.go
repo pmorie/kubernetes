@@ -87,3 +87,114 @@ func HasRunAsUser(container *api.Container) bool {
 func HasRootRunAsUser(container *api.Container) bool {
 	return HasRunAsUser(container) && HasRootUID(container)
 }
+
+// TODO: does this belong in another package?
+func SynthesizeContainerDefaults(spec *api.PodSpec) *api.SecurityContext {
+	var (
+		tmpContext = new(api.SecurityContext)
+
+		createDefaultCapabilities   = true
+		createDefaultPrivileged     = true
+		createDefaultSELinuxOptions = true
+		createDefaultRunAsUser      = true
+		createDefaultRunAsNonRoot   = true
+	)
+
+	for _, container := range spec.Containers {
+		if container.SecurityContext == nil {
+			return nil
+		}
+
+		if createDefaultCapabilities {
+			if container.SecurityContext.Capabilities == nil {
+				createDefaultCapabilities = false
+				tmpContext.Capabilities = nil
+			} else {
+				if tmpContext.Capabilities == nil {
+					// this has to be the first container in the cluster if tmpContext.Capabilities is unset
+					tmpContext.Capabilities = new(api.Capabilities)
+					*tmpContext.Capabilities = *container.SecurityContext.Capabilities
+				} else {
+					if api.Semantic.DeepEqual(tmpContext.Capabilities, container.SecurityContext.Capabilities) {
+						// continue; keep looking
+					} else {
+						createDefaultCapabilities = false
+						tmpContext.Capabilities = nil
+					}
+				}
+			}
+		}
+
+		if createDefaultPrivileged {
+			if container.SecurityContext.Privileged == nil {
+				createDefaultPrivileged = false
+				tmpContext.Privileged = nil
+			} else {
+				if tmpContext.Privileged == nil {
+					tmpContext.Privileged = new(bool)
+					*tmpContext.Privileged = *container.SecurityContext.Privileged
+				} else {
+					if api.Semantic.DeepEqual(tmpContext.Privileged, container.SecurityContext.Privileged) {
+						// continue; keep looking
+					} else {
+						createDefaultPrivileged = false
+						tmpContext.Privileged = nil
+					}
+				}
+			}
+		}
+
+		if createDefaultSELinuxOptions {
+			if container.SecurityContext.SELinuxOptions == nil {
+				createDefaultSELinuxOptions = false
+				tmpContext.SELinuxOptions = nil
+			} else {
+				if tmpContext.SELinuxOptions == nil {
+					tmpContext.SELinuxOptions = new(api.SELinuxOptions)
+					*tmpContext.SELinuxOptions = *container.SecurityContext.SELinuxOptions
+				} else {
+					if api.Semantic.DeepEqual(tmpContext.SELinuxOptions, container.SecurityContext.SELinuxOptions) {
+						// continue
+					} else {
+						createDefaultSELinuxOptions = false
+						tmpContext.SELinuxOptions = nil
+					}
+				}
+			}
+		}
+
+		if createDefaultRunAsUser {
+			if container.SecurityContext.RunAsUser == nil {
+				createDefaultRunAsUser = false
+				tmpContext.RunAsUser = nil
+			} else {
+				if tmpContext.RunAsUser == nil {
+					tmpContext.RunAsUser = new(int64)
+					*tmpContext.RunAsUser = *container.SecurityContext.RunAsUser
+				} else {
+					if api.Semantic.DeepEqual(tmpContext.RunAsUser, container.SecurityContext.RunAsUser) {
+						// continue
+					} else {
+						createDefaultRunAsUser = false
+						tmpContext.RunAsUser = nil
+					}
+				}
+			}
+		}
+
+		if createDefaultRunAsNonRoot {
+			if !container.SecurityContext.RunAsNonRoot {
+				createDefaultRunAsNonRoot = false
+				tmpContext.RunAsNonRoot = false
+			} else {
+				if tmpContext.RunAsNonRoot {
+					// continue
+				} else {
+					tmpContext.RunAsNonRoot = true
+				}
+			}
+		}
+	}
+
+	return tmpContext
+}

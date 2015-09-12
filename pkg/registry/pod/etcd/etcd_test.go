@@ -64,6 +64,7 @@ func validNewPod() *api.Pod {
 					SecurityContext:        securitycontext.ValidSecurityContextWithContainerDefaults(),
 				},
 			},
+			SecurityContext: &api.PodSecurityContext{ContainerDefaults: &api.SecurityContext{}},
 		},
 	}
 }
@@ -617,6 +618,7 @@ func TestEtcdUpdateScheduled(t *testing.T) {
 					SecurityContext: securitycontext.ValidSecurityContextWithContainerDefaults(),
 				},
 			},
+			SecurityContext: &api.PodSecurityContext{ContainerDefaults: &api.SecurityContext{}},
 		},
 	}), 1)
 
@@ -631,19 +633,18 @@ func TestEtcdUpdateScheduled(t *testing.T) {
 		},
 		Spec: api.PodSpec{
 			NodeName: "machine",
-			Containers: []api.Container{
-				{
-					Name:                   "foobar",
-					Image:                  "foo:v2",
-					ImagePullPolicy:        api.PullIfNotPresent,
-					TerminationMessagePath: api.TerminationMessagePathDefault,
-					SecurityContext:        securitycontext.ValidSecurityContextWithContainerDefaults(),
-				},
-			},
+			Containers: []api.Container{{
+				Name:                   "foobar",
+				Image:                  "foo:v2",
+				ImagePullPolicy:        api.PullIfNotPresent,
+				TerminationMessagePath: api.TerminationMessagePathDefault,
+				SecurityContext:        securitycontext.ValidSecurityContextWithContainerDefaults(),
+			}},
 			RestartPolicy: api.RestartPolicyAlways,
 			DNSPolicy:     api.DNSClusterFirst,
 
 			TerminationGracePeriodSeconds: &grace,
+			SecurityContext:               &api.PodSecurityContext{ContainerDefaults: &api.SecurityContext{}},
 		},
 	}
 	_, _, err := storage.Update(ctx, &podIn)
@@ -682,6 +683,7 @@ func TestEtcdUpdateStatus(t *testing.T) {
 					SecurityContext: securitycontext.ValidSecurityContextWithContainerDefaults(),
 				},
 			},
+			SecurityContext: &api.PodSecurityContext{ContainerDefaults: &api.SecurityContext{}},
 		},
 	}
 	fakeClient.Set(key, runtime.EncodeOrDie(testapi.Default.Codec(), &podStart), 0)
@@ -703,6 +705,7 @@ func TestEtcdUpdateStatus(t *testing.T) {
 					TerminationMessagePath: api.TerminationMessagePathDefault,
 				},
 			},
+			SecurityContext: &api.PodSecurityContext{ContainerDefaults: &api.SecurityContext{}},
 		},
 		Status: api.PodStatus{
 			Phase:   api.PodRunning,

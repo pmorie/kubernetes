@@ -133,6 +133,7 @@ func TestList(t *testing.T) {
 					RestartPolicy:                 api.RestartPolicyAlways,
 					DNSPolicy:                     api.DNSClusterFirst,
 					TerminationGracePeriodSeconds: &grace,
+					SecurityContext:               &api.PodSecurityContext{ContainerDefaults: &api.SecurityContext{}},
 				},
 			},
 			{
@@ -141,6 +142,7 @@ func TestList(t *testing.T) {
 					RestartPolicy:                 api.RestartPolicyAlways,
 					DNSPolicy:                     api.DNSClusterFirst,
 					TerminationGracePeriodSeconds: &grace,
+					SecurityContext:               &api.PodSecurityContext{ContainerDefaults: &api.SecurityContext{}},
 				},
 			},
 			{
@@ -149,6 +151,7 @@ func TestList(t *testing.T) {
 					RestartPolicy:                 api.RestartPolicyAlways,
 					DNSPolicy:                     api.DNSClusterFirst,
 					TerminationGracePeriodSeconds: &grace,
+					SecurityContext:               &api.PodSecurityContext{ContainerDefaults: &api.SecurityContext{}},
 				},
 			},
 		},
@@ -221,6 +224,7 @@ func TestListAcrossDirectories(t *testing.T) {
 					RestartPolicy:                 api.RestartPolicyAlways,
 					DNSPolicy:                     api.DNSClusterFirst,
 					TerminationGracePeriodSeconds: &grace,
+					SecurityContext:               &api.PodSecurityContext{ContainerDefaults: &api.SecurityContext{}},
 				},
 			},
 			{
@@ -229,6 +233,7 @@ func TestListAcrossDirectories(t *testing.T) {
 					RestartPolicy:                 api.RestartPolicyAlways,
 					DNSPolicy:                     api.DNSClusterFirst,
 					TerminationGracePeriodSeconds: &grace,
+					SecurityContext:               &api.PodSecurityContext{ContainerDefaults: &api.SecurityContext{}},
 				},
 			},
 			{
@@ -237,6 +242,7 @@ func TestListAcrossDirectories(t *testing.T) {
 					RestartPolicy:                 api.RestartPolicyAlways,
 					DNSPolicy:                     api.DNSClusterFirst,
 					TerminationGracePeriodSeconds: &grace,
+					SecurityContext:               &api.PodSecurityContext{ContainerDefaults: &api.SecurityContext{}},
 				},
 			},
 		},
@@ -296,6 +302,7 @@ func TestListExcludesDirectories(t *testing.T) {
 					RestartPolicy:                 api.RestartPolicyAlways,
 					DNSPolicy:                     api.DNSClusterFirst,
 					TerminationGracePeriodSeconds: &grace,
+					SecurityContext:               &api.PodSecurityContext{ContainerDefaults: &api.SecurityContext{}},
 				},
 			},
 			{
@@ -304,6 +311,7 @@ func TestListExcludesDirectories(t *testing.T) {
 					RestartPolicy:                 api.RestartPolicyAlways,
 					DNSPolicy:                     api.DNSClusterFirst,
 					TerminationGracePeriodSeconds: &grace,
+					SecurityContext:               &api.PodSecurityContext{ContainerDefaults: &api.SecurityContext{}},
 				},
 			},
 			{
@@ -312,6 +320,7 @@ func TestListExcludesDirectories(t *testing.T) {
 					RestartPolicy:                 api.RestartPolicyAlways,
 					DNSPolicy:                     api.DNSClusterFirst,
 					TerminationGracePeriodSeconds: &grace,
+					SecurityContext:               &api.PodSecurityContext{ContainerDefaults: &api.SecurityContext{}},
 				},
 			},
 		},
@@ -338,6 +347,7 @@ func TestGet(t *testing.T) {
 			RestartPolicy:                 api.RestartPolicyAlways,
 			DNSPolicy:                     api.DNSClusterFirst,
 			TerminationGracePeriodSeconds: &grace,
+			SecurityContext:               &api.PodSecurityContext{ContainerDefaults: &api.SecurityContext{}},
 		},
 	}
 	fakeClient.Set(key, runtime.EncodeOrDie(testapi.Default.Codec(), &expect), 0)

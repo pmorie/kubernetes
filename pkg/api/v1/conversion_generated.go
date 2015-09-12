@@ -1601,6 +1601,22 @@ func convert_api_PodProxyOptions_To_v1_PodProxyOptions(in *api.PodProxyOptions, 
 	return nil
 }
 
+func convert_api_PodSecurityContext_To_v1_PodSecurityContext(in *api.PodSecurityContext, out *PodSecurityContext, s conversion.Scope) error {
+	if defaulting, found := s.DefaultingInterface(reflect.TypeOf(*in)); found {
+		defaulting.(func(*api.PodSecurityContext))(in)
+	}
+	out.HostNetwork = in.HostNetwork
+	if in.ContainerDefaults != nil {
+		out.ContainerDefaults = new(SecurityContext)
+		if err := convert_api_SecurityContext_To_v1_SecurityContext(in.ContainerDefaults, out.ContainerDefaults, s); err != nil {
+			return err
+		}
+	} else {
+		out.ContainerDefaults = nil
+	}
+	return nil
+}
+
 func convert_api_PodStatus_To_v1_PodStatus(in *api.PodStatus, out *PodStatus, s conversion.Scope) error {
 	if defaulting, found := s.DefaultingInterface(reflect.TypeOf(*in)); found {
 		defaulting.(func(*api.PodStatus))(in)
@@ -4005,6 +4021,22 @@ func convert_v1_PodProxyOptions_To_api_PodProxyOptions(in *PodProxyOptions, out 
 	return nil
 }
 
+func convert_v1_PodSecurityContext_To_api_PodSecurityContext(in *PodSecurityContext, out *api.PodSecurityContext, s conversion.Scope) error {
+	if defaulting, found := s.DefaultingInterface(reflect.TypeOf(*in)); found {
+		defaulting.(func(*PodSecurityContext))(in)
+	}
+	out.HostNetwork = in.HostNetwork
+	if in.ContainerDefaults != nil {
+		out.ContainerDefaults = new(api.SecurityContext)
+		if err := convert_v1_SecurityContext_To_api_SecurityContext(in.ContainerDefaults, out.ContainerDefaults, s); err != nil {
+			return err
+		}
+	} else {
+		out.ContainerDefaults = nil
+	}
+	return nil
+}
+
 func convert_v1_PodStatus_To_api_PodStatus(in *PodStatus, out *api.PodStatus, s conversion.Scope) error {
 	if defaulting, found := s.DefaultingInterface(reflect.TypeOf(*in)); found {
 		defaulting.(func(*PodStatus))(in)
@@ -4915,6 +4947,7 @@ func init() {
 		convert_api_PodList_To_v1_PodList,
 		convert_api_PodLogOptions_To_v1_PodLogOptions,
 		convert_api_PodProxyOptions_To_v1_PodProxyOptions,
+		convert_api_PodSecurityContext_To_v1_PodSecurityContext,
 		convert_api_PodStatusResult_To_v1_PodStatusResult,
 		convert_api_PodStatus_To_v1_PodStatus,
 		convert_api_PodTemplateList_To_v1_PodTemplateList,
@@ -5032,6 +5065,7 @@ func init() {
 		convert_v1_PodList_To_api_PodList,
 		convert_v1_PodLogOptions_To_api_PodLogOptions,
 		convert_v1_PodProxyOptions_To_api_PodProxyOptions,
+		convert_v1_PodSecurityContext_To_api_PodSecurityContext,
 		convert_v1_PodStatusResult_To_api_PodStatusResult,
 		convert_v1_PodStatus_To_api_PodStatus,
 		convert_v1_PodTemplateList_To_api_PodTemplateList,

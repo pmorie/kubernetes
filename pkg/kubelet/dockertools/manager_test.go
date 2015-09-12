@@ -828,7 +828,7 @@ func TestIsAExitError(t *testing.T) {
 
 func generatePodInfraContainerHash(pod *api.Pod) uint64 {
 	var ports []api.ContainerPort
-	if !pod.Spec.HostNetwork {
+	if pod.Spec.SecurityContext == nil || !pod.Spec.SecurityContext.HostNetwork {
 		for _, container := range pod.Spec.Containers {
 			ports = append(ports, container.Ports...)
 		}
@@ -2124,7 +2124,9 @@ func TestSyncPodWithHostNetwork(t *testing.T) {
 			Containers: []api.Container{
 				{Name: "bar"},
 			},
-			HostNetwork: true,
+			SecurityContext: &api.PodSecurityContext{
+				HostNetwork: true,
+			},
 		},
 	}
 

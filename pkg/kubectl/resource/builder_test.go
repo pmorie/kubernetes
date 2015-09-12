@@ -94,6 +94,7 @@ func testData() (*api.PodList, *api.ServiceList) {
 					RestartPolicy:                 api.RestartPolicyAlways,
 					DNSPolicy:                     api.DNSClusterFirst,
 					TerminationGracePeriodSeconds: &grace,
+					SecurityContext:               &api.PodSecurityContext{ContainerDefaults: &api.SecurityContext{}},
 				},
 			},
 			{
@@ -102,6 +103,7 @@ func testData() (*api.PodList, *api.ServiceList) {
 					RestartPolicy:                 api.RestartPolicyAlways,
 					DNSPolicy:                     api.DNSClusterFirst,
 					TerminationGracePeriodSeconds: &grace,
+					SecurityContext:               &api.PodSecurityContext{ContainerDefaults: &api.SecurityContext{}},
 				},
 			},
 		},

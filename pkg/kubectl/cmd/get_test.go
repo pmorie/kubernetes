@@ -50,6 +50,7 @@ func testData() (*api.PodList, *api.ServiceList, *api.ReplicationControllerList)
 					RestartPolicy:                 api.RestartPolicyAlways,
 					DNSPolicy:                     api.DNSClusterFirst,
 					TerminationGracePeriodSeconds: &grace,
+					SecurityContext:               &api.PodSecurityContext{ContainerDefaults: &api.SecurityContext{}},
 				},
 			},
 			{
@@ -58,6 +59,7 @@ func testData() (*api.PodList, *api.ServiceList, *api.ReplicationControllerList)
 					RestartPolicy:                 api.RestartPolicyAlways,
 					DNSPolicy:                     api.DNSClusterFirst,
 					TerminationGracePeriodSeconds: &grace,
+					SecurityContext:               &api.PodSecurityContext{ContainerDefaults: &api.SecurityContext{}},
 				},
 			},
 		},
@@ -578,6 +580,7 @@ func watchTestData() ([]api.Pod, []watch.Event) {
 				RestartPolicy:                 api.RestartPolicyAlways,
 				DNSPolicy:                     api.DNSClusterFirst,
 				TerminationGracePeriodSeconds: &grace,
+				SecurityContext:               &api.PodSecurityContext{ContainerDefaults: &api.SecurityContext{}},
 			},
 		},
 	}
@@ -594,6 +597,7 @@ func watchTestData() ([]api.Pod, []watch.Event) {
 					RestartPolicy:                 api.RestartPolicyAlways,
 					DNSPolicy:                     api.DNSClusterFirst,
 					TerminationGracePeriodSeconds: &grace,
+					SecurityContext:               &api.PodSecurityContext{ContainerDefaults: &api.SecurityContext{}},
 				},
 			},
 		},
@@ -609,6 +613,7 @@ func watchTestData() ([]api.Pod, []watch.Event) {
 					RestartPolicy:                 api.RestartPolicyAlways,
 					DNSPolicy:                     api.DNSClusterFirst,
 					TerminationGracePeriodSeconds: &grace,
+					SecurityContext:               &api.PodSecurityContext{ContainerDefaults: &api.SecurityContext{}},
 				},
 			},
 		},
@@ -651,7 +656,7 @@ func TestWatchSelector(t *testing.T) {
 	expected := []runtime.Object{&api.PodList{Items: pods}, events[0].Object, events[1].Object}
 	actual := tf.Printer.(*testPrinter).Objects
 	if !reflect.DeepEqual(expected, actual) {
-		t.Errorf("unexpected object: %#v %#v", expected[0], actual[0])
+		t.Errorf("unexpected object:\nExpected: %#v\n\nGot: %#v\n\n", expected[0], actual[0])
 	}
 	if len(buf.String()) == 0 {
 		t.Errorf("unexpected empty output")
@@ -689,7 +694,7 @@ func TestWatchResource(t *testing.T) {
 	expected := []runtime.Object{&pods[0], events[0].Object, events[1].Object}
 	actual := tf.Printer.(*testPrinter).Objects
 	if !reflect.DeepEqual(expected, actual) {
-		t.Errorf("unexpected object: %#v", actual)
+		t.Errorf("unexpected object:\nExpected: %#v\n\nGot: %#v\n\n", expected, actual)
 	}
 	if len(buf.String()) == 0 {
 		t.Errorf("unexpected empty output")
