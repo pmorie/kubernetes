@@ -1007,6 +1007,23 @@ type PodSecurityContext struct {
 	// Use the host's ipc namespace.
 	// Optional: Default to false.
 	HostIPC bool `json:"hostIPC,omitempty"`
+
+	// Capabilities are the capabilities to add/drop when running containers
+	Capabilities *Capabilities `json:"capabilities,omitempty"`
+
+	// Run all containers in privileged mode
+	Privileged *bool `json:"privileged,omitempty"`
+
+	// SELinuxOptions is the SELinux context to be applied to all containers
+	SELinuxOptions *SELinuxOptions `json:"seLinuxOptions,omitempty"`
+
+	// RunAsUser is the UID to run the entrypoint of all container processes
+	RunAsUser *int64 `json:"runAsUser,omitempty"`
+
+	// RunAsNonRoot indicates that all containers should be run as a non-root user.
+	// If the RunAsUser field is not explicitly set then the kubelet may check the
+	// image for a specified user or perform defaulting to specify a user.
+	RunAsNonRoot bool `json:"runAsNonRoot,omitempty"`
 }
 
 // PodStatus represents information about the status of a pod. Status may trail the actual
@@ -2051,7 +2068,7 @@ type SecurityContext struct {
 	// RunAsNonRoot indicates that the container should be run as a non-root user.  If the RunAsUser
 	// field is not explicitly set then the kubelet may check the image for a specified user or
 	// perform defaulting to specify a user.
-	RunAsNonRoot bool
+	RunAsNonRoot bool `json:"runAsNonRoot,omitempty"`
 }
 
 // SELinuxOptions are the labels to be applied to the container.

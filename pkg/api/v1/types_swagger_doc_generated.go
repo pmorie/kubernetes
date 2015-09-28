@@ -974,7 +974,12 @@ func (PodProxyOptions) SwaggerDoc() map[string]string {
 }
 
 var map_PodSecurityContext = map[string]string{
-	"": "PodSecurityContext holds pod-level security attributes and common container settings.",
+	"":               "PodSecurityContext holds pod-level security attributes and common container settings.",
+	"capabilities":   "Capabilities are the capabilities to add/drop when running containers",
+	"privileged":     "Run all containers in privileged mode",
+	"seLinuxOptions": "SELinuxOptions is the SELinux context to be applied to all containers",
+	"runAsUser":      "RunAsUser is the UID to run the entrypoint of all container processes",
+	"runAsNonRoot":   "RunAsNonRoot indicates that all containers should be run as a non-root user. If the RunAsUser field is not explicitly set then the kubelet may check the image for a specified user or perform defaulting to specify a user.",
 }
 
 func (PodSecurityContext) SwaggerDoc() map[string]string {

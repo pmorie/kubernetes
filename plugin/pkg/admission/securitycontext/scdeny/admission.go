@@ -57,6 +57,14 @@ func (p *plugin) Admit(a admission.Attributes) (err error) {
 	if !ok {
 		return apierrors.NewBadRequest("Resource was marked with kind Pod but was unable to be converted")
 	}
+	if pod.Spec.SecurityContext != nil {
+		if pod.Spec.SecurityContext.SELinuxOptions != nil {
+			return apierrors.NewForbidden(a.GetResource(), pod.Name, fmt.Errorf("pod.Spec.SecurityContext.SELinuxOptions is forbidden"))
+		}
+		if pod.Spec.SecurityContext.RunAsUser != nil {
+			return apierrors.NewForbidden(a.GetResource(), pod.Name, fmt.Errorf("pod.Spec.SecurityContext.RunAsUser is forbidden"))
+		}
+	}
 	for _, v := range pod.Spec.Containers {
 		if v.SecurityContext != nil {
 			if v.SecurityContext.SELinuxOptions != nil {

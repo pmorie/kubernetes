@@ -92,6 +92,17 @@ func FuzzerFor(t *testing.T, version string, src rand.Source) *fuzz.Fuzzer {
 			j.LabelSelector, _ = labels.Parse("a=b")
 			j.FieldSelector, _ = fields.ParseSelector("a=b")
 		},
+		func(psc *api.PodSecurityContext, c fuzz.Continue) {
+			c.FuzzNoCustom(psc) // fuzz self without calling this function again
+			priv := c.RandBool()
+			psc.Privileged = &priv
+			psc.Capabilities = &api.Capabilities{
+				Add:  make([]api.Capability, 0),
+				Drop: make([]api.Capability, 0),
+			}
+			c.Fuzz(&psc.Capabilities.Add)
+			c.Fuzz(&psc.Capabilities.Drop)
+		},
 		func(s *api.PodSpec, c fuzz.Continue) {
 			c.FuzzNoCustom(s)
 			// has a default value
@@ -101,9 +112,7 @@ func FuzzerFor(t *testing.T, version string, src rand.Source) *fuzz.Fuzzer {
 			}
 			s.TerminationGracePeriodSeconds = &ttl
 
-			if s.SecurityContext == nil {
-				s.SecurityContext = &api.PodSecurityContext{}
-			}
+			c.Fuzz(s.SecurityContext)
 		},
 		func(j *api.PodPhase, c fuzz.Continue) {
 			statuses := []api.PodPhase{api.PodPending, api.PodRunning, api.PodFailed, api.PodUnknown}
