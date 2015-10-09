@@ -527,6 +527,12 @@ func deepCopy_v1_PodSecurityContext(in v1.PodSecurityContext, out *v1.PodSecurit
 		out.RunAsUser = nil
 	}
 	out.RunAsNonRoot = in.RunAsNonRoot
+	if in.FSGroup != nil {
+		out.FSGroup = new(int64)
+		*out.FSGroup = *in.FSGroup
+	} else {
+		out.FSGroup = nil
+	}
 	return nil
 }
 

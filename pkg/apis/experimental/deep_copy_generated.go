@@ -492,6 +492,12 @@ func deepCopy_api_PodSecurityContext(in api.PodSecurityContext, out *api.PodSecu
 		out.RunAsUser = nil
 	}
 	out.RunAsNonRoot = in.RunAsNonRoot
+	if in.FSGroup != nil {
+		out.FSGroup = new(int64)
+		*out.FSGroup = *in.FSGroup
+	} else {
+		out.FSGroup = nil
+	}
 	return nil
 }
 

@@ -980,6 +980,7 @@ var map_PodSecurityContext = map[string]string{
 	"seLinuxOptions": "SELinuxOptions is the SELinux context to be applied to all containers",
 	"runAsUser":      "RunAsUser is the UID to run the entrypoint of all container processes",
 	"runAsNonRoot":   "RunAsNonRoot indicates that all containers should be run as a non-root user. If the RunAsUser field is not explicitly set then the kubelet may check the image for a specified user or perform defaulting to specify a user.",
+	"fsGroup":        "FSGroup is a special supplemental group that all containers in a pod run as.  If FSGroup is set, the kubelet will make the volumes the pod has exclusive ownership of owned by this group and set the setgid bit on the volume directory so that new files created in the volume are also owned by the FS group.  If FSGroup is not set, the kubelet will not change the ownership of any volumes.",
 }
 
 func (PodSecurityContext) SwaggerDoc() map[string]string {

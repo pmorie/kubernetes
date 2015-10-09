@@ -1024,6 +1024,14 @@ type PodSecurityContext struct {
 	// If the RunAsUser field is not explicitly set then the kubelet may check the
 	// image for a specified user or perform defaulting to specify a user.
 	RunAsNonRoot bool `json:"runAsNonRoot,omitempty"`
+
+	// FSGroup is a special supplemental group that all containers in a pod
+	// run as.  If FSGroup is set, the kubelet will make the volumes the pod
+	// has exclusive ownership of owned by this group and set the setgid bit
+	// on the volume directory so that new files created in the volume are
+	// also owned by the FS group.  If FSGroup is not set, the kubelet will not
+	// change the ownership of any volumes.
+	FSGroup *int64 `json:"fsGroup,omitempty"`
 }
 
 // PodStatus represents information about the status of a pod. Status may trail the actual
