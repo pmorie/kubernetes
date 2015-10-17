@@ -309,8 +309,8 @@ func convert_api_PodSpec_To_v1_PodSpec(in *api.PodSpec, out *PodSpec, s conversi
 	} else {
 		out.ImagePullSecrets = nil
 	}
-	glog.Infof("\n----\nAPI->V1 END podspec in:\n\n%#v\n\nout\n\n:%#v", in, out)
-	glog.Infof("\n----\nAPI->V1 END podspec in.Capabilities:\n\n%#v\n\nout.SecurityContext.Capabilities\n\n:%#v", in.SecurityContext.Capabilities, out.SecurityContext.Capabilities)
+	glog.Infof("\n----\nAPI->V1 END podspec in: %#v\n\nout: %#v", in, out)
+	glog.Infof("\n----\nAPI->V1 END podspec in.SecurityContext: %#v\n\nout.SecurityContext: %#v", in.SecurityContext.Capabilities, out.SecurityContext.Capabilities)
 	return nil
 }
 
@@ -395,8 +395,8 @@ func convert_v1_PodSpec_To_api_PodSpec(in *PodSpec, out *api.PodSpec, s conversi
 		out.ImagePullSecrets = nil
 	}
 
-	glog.Infof("\n----\nV1->API END podspec in:\n\n%#v\n\nout\n\n:%#v", in, out)
-	glog.Infof("\n----\nV1->API END podspec in.Capabilities:\n\n%#v\n\nout.SecurityContext.Capabilities\n\n:%#v", in.SecurityContext.Capabilities, out.SecurityContext.Capabilities)
+	glog.Infof("\n----\nV1->API END podspec in:\n\n%#v\n\nout:\n\n%#v", in, out)
+	glog.Infof("\n----\nV1->API END podspec in.SecurityContext: %#v\n\nout.SecurityContext: %#v", in.SecurityContext, out.SecurityContext)
 
 	return nil
 }

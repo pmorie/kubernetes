@@ -157,9 +157,9 @@ func doRoundTripTest(kind string, t *testing.T) {
 		t.Fatalf("%q is not a TypeMeta and cannot be tested - add it to nonRoundTrippableTypes: %v", kind, err)
 	}
 	roundTripSame(t, item, nonRoundTrippableTypesByVersion[kind]...)
-	if !nonInternalRoundTrippableTypes.Has(kind) {
-		roundTrip(t, api.Codec, fuzzInternalObject(t, "", item, rand.Int63()))
-	}
+	// if !nonInternalRoundTrippableTypes.Has(kind) {
+	// 	roundTrip(t, api.Codec, fuzzInternalObject(t, "", item, rand.Int63()))
+	// }
 }
 
 func TestEncode_Ptr(t *testing.T) {
