@@ -17,6 +17,11 @@ limitations under the License.
 package conversion
 
 import (
+	"github.com/golang/glog"
+	"os"
+	"reflect"
+	"text/template"
+
 	"errors"
 	"fmt"
 	"github.com/ugorji/go/codec"
@@ -50,7 +55,25 @@ func (s *Scheme) DecodeToVersionedObject(data []byte) (obj interface{}, version,
 // s.InternalVersion type before being returned. Decode will not decode
 // objects without version set unless InternalVersion is also "".
 func (s *Scheme) Decode(data []byte) (interface{}, error) {
-	return s.DecodeToVersion(data, s.InternalVersion)
+	glog.Infof("\n**********\nDATA: %v\n", string(data))
+	ret, err := s.DecodeToVersion(data, s.InternalVersion)
+	glog.Infof("\n%%%%%%%%%%%%11111\nDECODED: %#v", ret)
+	typ := reflect.TypeOf(ret)
+	name := typ.Elem().Name()
+
+	if "Pod" == name {
+		glog.Infof("\n%%%%%%%%%%%%22222\nDECODED: %#v", ret)
+
+		tmpl, err := template.New("test").Parse(`TEMPLATE: {{printf "%#v" .Spec.SecurityContext}}`)
+		if err == nil {
+			tmpl.Execute(os.Stdout, ret)
+		} else {
+			glog.Info("TEMPLATE FAILED TO PARSE")
+		}
+
+	}
+
+	return ret, err
 }
 
 // DecodeToVersion converts a JSON string back into a pointer to an api object.

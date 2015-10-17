@@ -20,6 +20,8 @@ import (
 	"fmt"
 	"reflect"
 
+	"github.com/golang/glog"
+
 	"k8s.io/kubernetes/pkg/api"
 	"k8s.io/kubernetes/pkg/conversion"
 )
@@ -234,6 +236,8 @@ func convert_v1_ReplicationControllerSpec_To_api_ReplicationControllerSpec(in *R
 // The following two PodSpec conversions are done here to support ServiceAccount
 // as an alias for ServiceAccountName.
 func convert_api_PodSpec_To_v1_PodSpec(in *api.PodSpec, out *PodSpec, s conversion.Scope) error {
+	glog.Infof("\n----\nAPI->V1 BEGIN podspec in:\n\n%#v\n", in)
+	glog.Infof("\n----\nAPI->V1 BEGIN podspec in.Capabilities:\n\n%#v\n", in.SecurityContext.Capabilities)
 	if defaulting, found := s.DefaultingInterface(reflect.TypeOf(*in)); found {
 		defaulting.(func(*api.PodSpec))(in)
 	}
@@ -305,10 +309,14 @@ func convert_api_PodSpec_To_v1_PodSpec(in *api.PodSpec, out *PodSpec, s conversi
 	} else {
 		out.ImagePullSecrets = nil
 	}
+	glog.Infof("\n----\nAPI->V1 END podspec in:\n\n%#v\n\nout\n\n:%#v", in, out)
+	glog.Infof("\n----\nAPI->V1 END podspec in.Capabilities:\n\n%#v\n\nout.SecurityContext.Capabilities\n\n:%#v", in.SecurityContext.Capabilities, out.SecurityContext.Capabilities)
 	return nil
 }
 
 func convert_v1_PodSpec_To_api_PodSpec(in *PodSpec, out *api.PodSpec, s conversion.Scope) error {
+	glog.Infof("\n----\nV1->API BEGIN podspec in:\n\n%#v\n", in)
+	glog.Infof("\n----\nV1->API BEGIN podspec in.Capabilities:\n\n%#v\n", in.SecurityContext.Capabilities)
 	if defaulting, found := s.DefaultingInterface(reflect.TypeOf(*in)); found {
 		defaulting.(func(*PodSpec))(in)
 	}
@@ -386,6 +394,10 @@ func convert_v1_PodSpec_To_api_PodSpec(in *PodSpec, out *api.PodSpec, s conversi
 	} else {
 		out.ImagePullSecrets = nil
 	}
+
+	glog.Infof("\n----\nV1->API END podspec in:\n\n%#v\n\nout\n\n:%#v", in, out)
+	glog.Infof("\n----\nV1->API END podspec in.Capabilities:\n\n%#v\n\nout.SecurityContext.Capabilities\n\n:%#v", in.SecurityContext.Capabilities, out.SecurityContext.Capabilities)
+
 	return nil
 }
 
@@ -447,6 +459,9 @@ func convert_api_PodSecurityContext_To_v1_PodSecurityContext(in *api.PodSecurity
 		out.RunAsUser = nil
 	}
 	out.RunAsNonRoot = in.RunAsNonRoot
+
+	glog.Infof("\n----\npsc in:\n\n%#v\n\nout\n\n:%#v", in, out)
+	glog.Infof("\n----\npsc in.Capabilities:\n\n%#v\n\nout.SecurityContext.Capabilities\n\n:%#v", in.Capabilities, out.Capabilities)
 	return nil
 }
 

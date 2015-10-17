@@ -17,6 +17,8 @@ limitations under the License.
 package api_test
 
 import (
+	"github.com/golang/glog"
+
 	"encoding/json"
 
 	"math/rand"
@@ -62,6 +64,8 @@ func roundTrip(t *testing.T, codec runtime.Codec, item runtime.Object) {
 		t.Errorf("%v: %v (%s)", name, err, printer.Sprintf("%#v", item))
 		return
 	}
+
+	glog.Infof("\n==========\n%v\n", string(data))
 
 	obj2, err := codec.Decode(data)
 	if err != nil {
