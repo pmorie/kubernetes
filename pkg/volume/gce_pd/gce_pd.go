@@ -238,6 +238,10 @@ func (b *gcePersistentDiskBuilder) IsReadOnly() bool {
 	return b.readOnly
 }
 
+func (b *gcePersistentDiskBuilder) SupportsSELinux() bool {
+	return !b.IsReadOnly()
+}
+
 func makeGlobalPDName(host volume.VolumeHost, devName string) string {
 	return path.Join(host.GetPluginDir(gcePersistentDiskPluginName), "mounts", devName)
 }

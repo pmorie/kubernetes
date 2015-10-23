@@ -1,5 +1,3 @@
-// +build !linux
-
 /*
 Copyright 2014 The Kubernetes Authors All rights reserved.
 
@@ -16,11 +14,14 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package empty_dir
+package selinux
 
-type realChconRunner struct{}
+// chconRunner knows how to chcon a directory.
+type ChconRunner interface {
+	SetContext(dir, context string) error
+}
 
-func (_ *realChconRunner) SetContext(dir, context string) error {
-	// NOP
-	return nil
+// newChconRunner returns a new chconRunner.
+func NewChconRunner() ChconRunner {
+	return &realChconRunner{}
 }

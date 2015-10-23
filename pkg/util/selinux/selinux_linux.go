@@ -1,3 +1,5 @@
+// +build linux
+
 /*
 Copyright 2014 The Kubernetes Authors All rights reserved.
 
@@ -14,14 +16,19 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package empty_dir
+package selinux
 
-// chconRunner knows how to chcon a directory.
-type chconRunner interface {
-	SetContext(dir, context string) error
-}
+import (
+	"github.com/docker/libcontainer/selinux"
+)
 
-// newChconRunner returns a new chconRunner.
-func newChconRunner() chconRunner {
-	return &realChconRunner{}
+type realChconRunner struct{}
+
+func (_ *realChconRunner) SetContext(dir, context string) error {
+	// If SELinux is not enabled, return an empty string
+	if !selinux.SelinuxEnabled() {
+		return nil
+	}
+
+	return selinux.Setfilecon(dir, context)
 }
