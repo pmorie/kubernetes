@@ -982,7 +982,6 @@ func (x *SubresourceReference) CodecEncodeSelf(e *codec1978.Encoder) {
 			_, _, _ = yysep78, yyq78, yy2arr78
 			const yyr78 bool = false
 			yyq78[0] = x.Kind != ""
-			yyq78[1] = x.Namespace != ""
 			yyq78[2] = x.Name != ""
 			yyq78[3] = x.APIVersion != ""
 			yyq78[4] = x.Subresource != ""
@@ -1016,28 +1015,6 @@ func (x *SubresourceReference) CodecEncodeSelf(e *codec1978.Encoder) {
 					if false {
 					} else {
 						r.EncodeString(codecSelferC_UTF81234, string(x.Kind))
-					}
-				}
-			}
-			if yyr78 || yy2arr78 {
-				if yyq78[1] {
-					yym83 := z.EncBinary()
-					_ = yym83
-					if false {
-					} else {
-						r.EncodeString(codecSelferC_UTF81234, string(x.Namespace))
-					}
-				} else {
-					r.EncodeString(codecSelferC_UTF81234, "")
-				}
-			} else {
-				if yyq78[1] {
-					r.EncodeString(codecSelferC_UTF81234, string("namespace"))
-					yym84 := z.EncBinary()
-					_ = yym84
-					if false {
-					} else {
-						r.EncodeString(codecSelferC_UTF81234, string(x.Namespace))
 					}
 				}
 			}
@@ -1169,12 +1146,6 @@ func (x *SubresourceReference) codecDecodeSelfFromMap(l int, d *codec1978.Decode
 			} else {
 				x.Kind = string(r.DecodeString())
 			}
-		case "namespace":
-			if r.TryDecodeAsNil() {
-				x.Namespace = ""
-			} else {
-				x.Namespace = string(r.DecodeString())
-			}
 		case "name":
 			if r.TryDecodeAsNil() {
 				x.Name = ""
@@ -1233,11 +1204,6 @@ func (x *SubresourceReference) codecDecodeSelfFromArray(l int, d *codec1978.Deco
 	if yyb102 {
 		r.ReadEnd()
 		return
-	}
-	if r.TryDecodeAsNil() {
-		x.Namespace = ""
-	} else {
-		x.Namespace = string(r.DecodeString())
 	}
 	yyj102++
 	if yyhl102 {
