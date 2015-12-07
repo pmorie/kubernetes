@@ -517,8 +517,18 @@ func validateAWSElasticBlockStoreVolumeSource(PD *api.AWSElasticBlockStoreVolume
 
 func validateSecretVolumeSource(secretSource *api.SecretVolumeSource, fldPath *validation.FieldPath) validation.ErrorList {
 	allErrs := validation.ErrorList{}
-	if secretSource.SecretName == "" {
+	if secretSource.SecretName == "" && len(secretSource.Items) == 0 {
 		allErrs = append(allErrs, validation.NewRequiredError(fldPath.Child("secretName")))
+		allErrs = append(allErrs, validation.NewRequiredError(fldPath.Child("items")))
+	}
+	if secretSource.SecretName != "" && len(secretSource.Items) > 0 {
+		allErrs = append(allErrs, validation.NewInvalidError(fldPath.Child("secretName"), secretSource.SecretName, "Only one of secretName and items may be specified"))
+		allErrs = append(allErrs, validation.NewInvalidError(fldPath.Child("items"), secretSource.Items, "Only one of secretName and items may be specified"))
+	}
+	if len(secretSource.Items) > 0 {
+		for i, file := range secretSource.Items {
+			allErrs = append(allErrs, validateVolumeSourcePath(file.Path, fldPath.Child("items").Index(i).Child("path"))...)
+		}
 	}
 	return allErrs
 }

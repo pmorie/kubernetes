@@ -1430,11 +1430,20 @@ func (kl *Kubelet) makeEnvironmentVariables(pod *api.Pod, container *api.Contain
 		if runtimeVal != "" {
 			// Step 1a: expand variable references
 			runtimeVal = expansion.Expand(runtimeVal, mappingFunc)
-		} else if envVar.ValueFrom != nil && envVar.ValueFrom.FieldRef != nil {
-			// Step 1b: resolve alternate env var sources
-			runtimeVal, err = kl.podFieldSelectorRuntimeValue(envVar.ValueFrom.FieldRef, pod)
-			if err != nil {
-				return result, err
+		} else if envVar.ValueFrom != nil {
+			switch {
+
+			case envVar.ValueFrom.FieldRef != nil:
+				// Step 1b: resolve alternate env var sources
+				runtimeVal, err = kl.podFieldSelectorRuntimeValue(envVar.ValueFrom.FieldRef, pod)
+				if err != nil {
+					return result, err
+				}
+			case envVar.ValueFrom.SecretKeyRef != nil:
+				runtimeVal, err = kl.secretKeySelectorRuntimeValue(envVar.ValueFrom.SecretKeyRef, pod)
+				if err != nil {
+					return result, err
+				}
 			}
 		}
 
@@ -1459,6 +1468,18 @@ func (kl *Kubelet) podFieldSelectorRuntimeValue(fs *api.ObjectFieldSelector, pod
 		return pod.Status.PodIP, nil
 	}
 	return fieldpath.ExtractFieldPathAsString(pod, internalFieldPath)
+}
+
+func (kl *Kubelet) secretKeySelectorRuntimeValue(s *api.SecretKeySelector, pod *api.Pod) (string, error) {
+	secret, err := kl.kubeClient.Secrets(pod.Namespace).Get(s.Name)
+	if err != nil {
+		return "", err
+	}
+	bytes, ok := secret.Data[s.Key]
+	if !ok {
+		return "", errors.New(fmt.Sprintf("Secret %s/%s does not contain key %s", pod.Namespace, pod.Name, s.Key))
+	}
+	return string(bytes), nil
 }
 
 // getClusterDNS returns a list of the DNS servers and a list of the DNS search

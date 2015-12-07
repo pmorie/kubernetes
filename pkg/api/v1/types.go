@@ -682,11 +682,22 @@ type GitRepoVolumeSource struct {
 }
 
 // SecretVolumeSource adapts a Secret into a VolumeSource.
-// More info: http://releases.k8s.io/HEAD/docs/design/secrets.md
+//
+// The contents of the target Secret's Data field will be presented in a volume
+// as files using the keys in the Data field as the file names.
 type SecretVolumeSource struct {
-	// SecretName is the name of a secret in the pod's namespace.
-	// More info: http://releases.k8s.io/HEAD/docs/user-guide/volumes.md#secrets
-	SecretName string `json:"secretName"`
+	// Name of the secret in the pod's namespace to use.  May not be specified if items is specified.
+	SecretName string `json:"secretName,omitempty"`
+	// A list of projections to make into the volume.  May not be specified if SecretName is specified.
+	Items []SecretVolumeFile `json:"items,omitempty"`
+}
+
+// SecretVolumeFile represents a single secret key projected into a file.
+type SecretVolumeFile struct {
+	// A reference to the secret key to project into the volume.
+	SecretKeySelector `json:",inline"`
+	// The path of the key within the volume.  Must be a relative path.  May not contain '..'.
+	Path string `json:"path,omitempty"`
 }
 
 // NFSVolumeSource represents an NFS mount that lasts the lifetime of a pod
@@ -799,7 +810,9 @@ type EnvVar struct {
 // EnvVarSource represents a source for the value of an EnvVar.
 type EnvVarSource struct {
 	// Selects a field of the pod. Only name and namespace are supported.
-	FieldRef *ObjectFieldSelector `json:"fieldRef"`
+	FieldRef *ObjectFieldSelector `json:"fieldRef,omitempty"`
+	// Selects a key of a secret in the pod's namespace
+	SecretKeyRef *SecretKeySelector `json:"secretKeyRef,omitempty"`
 }
 
 // ObjectFieldSelector selects an APIVersioned field of an object.
@@ -808,6 +821,14 @@ type ObjectFieldSelector struct {
 	APIVersion string `json:"apiVersion,omitempty"`
 	// Path of the field to select in the specified API version.
 	FieldPath string `json:"fieldPath"`
+}
+
+// SecretKeySelector selects a key of a Secret.
+type SecretKeySelector struct {
+	// The name of the secret in the pod's namespace to select from.
+	LocalObjectReference `json:",inline"`
+	// The key of the secret to select from.  Must be a valid secret key.
+	Key string `json:"key"`
 }
 
 // HTTPGetAction describes an action based on HTTP Get requests.
