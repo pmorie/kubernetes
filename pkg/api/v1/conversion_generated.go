@@ -667,6 +667,14 @@ func autoconvert_api_EnvVarSource_To_v1_EnvVarSource(in *api.EnvVarSource, out *
 	} else {
 		out.FieldRef = nil
 	}
+	if in.SecretKeyRef != nil {
+		out.SecretKeyRef = new(SecretKeySelector)
+		if err := convert_api_SecretKeySelector_To_v1_SecretKeySelector(in.SecretKeyRef, out.SecretKeyRef, s); err != nil {
+			return err
+		}
+	} else {
+		out.SecretKeyRef = nil
+	}
 	return nil
 }
 
@@ -2560,6 +2568,21 @@ func convert_api_Secret_To_v1_Secret(in *api.Secret, out *Secret, s conversion.S
 	return autoconvert_api_Secret_To_v1_Secret(in, out, s)
 }
 
+func autoconvert_api_SecretKeySelector_To_v1_SecretKeySelector(in *api.SecretKeySelector, out *SecretKeySelector, s conversion.Scope) error {
+	if defaulting, found := s.DefaultingInterface(reflect.TypeOf(*in)); found {
+		defaulting.(func(*api.SecretKeySelector))(in)
+	}
+	if err := convert_api_LocalObjectReference_To_v1_LocalObjectReference(&in.LocalObjectReference, &out.LocalObjectReference, s); err != nil {
+		return err
+	}
+	out.Key = in.Key
+	return nil
+}
+
+func convert_api_SecretKeySelector_To_v1_SecretKeySelector(in *api.SecretKeySelector, out *SecretKeySelector, s conversion.Scope) error {
+	return autoconvert_api_SecretKeySelector_To_v1_SecretKeySelector(in, out, s)
+}
+
 func autoconvert_api_SecretList_To_v1_SecretList(in *api.SecretList, out *SecretList, s conversion.Scope) error {
 	if defaulting, found := s.DefaultingInterface(reflect.TypeOf(*in)); found {
 		defaulting.(func(*api.SecretList))(in)
@@ -2587,11 +2610,36 @@ func convert_api_SecretList_To_v1_SecretList(in *api.SecretList, out *SecretList
 	return autoconvert_api_SecretList_To_v1_SecretList(in, out, s)
 }
 
+func autoconvert_api_SecretVolumeFile_To_v1_SecretVolumeFile(in *api.SecretVolumeFile, out *SecretVolumeFile, s conversion.Scope) error {
+	if defaulting, found := s.DefaultingInterface(reflect.TypeOf(*in)); found {
+		defaulting.(func(*api.SecretVolumeFile))(in)
+	}
+	if err := convert_api_SecretKeySelector_To_v1_SecretKeySelector(&in.SecretKeySelector, &out.SecretKeySelector, s); err != nil {
+		return err
+	}
+	out.Path = in.Path
+	return nil
+}
+
+func convert_api_SecretVolumeFile_To_v1_SecretVolumeFile(in *api.SecretVolumeFile, out *SecretVolumeFile, s conversion.Scope) error {
+	return autoconvert_api_SecretVolumeFile_To_v1_SecretVolumeFile(in, out, s)
+}
+
 func autoconvert_api_SecretVolumeSource_To_v1_SecretVolumeSource(in *api.SecretVolumeSource, out *SecretVolumeSource, s conversion.Scope) error {
 	if defaulting, found := s.DefaultingInterface(reflect.TypeOf(*in)); found {
 		defaulting.(func(*api.SecretVolumeSource))(in)
 	}
 	out.SecretName = in.SecretName
+	if in.Items != nil {
+		out.Items = make([]SecretVolumeFile, len(in.Items))
+		for i := range in.Items {
+			if err := convert_api_SecretVolumeFile_To_v1_SecretVolumeFile(&in.Items[i], &out.Items[i], s); err != nil {
+				return err
+			}
+		}
+	} else {
+		out.Items = nil
+	}
 	return nil
 }
 
@@ -3693,6 +3741,14 @@ func autoconvert_v1_EnvVarSource_To_api_EnvVarSource(in *EnvVarSource, out *api.
 		}
 	} else {
 		out.FieldRef = nil
+	}
+	if in.SecretKeyRef != nil {
+		out.SecretKeyRef = new(api.SecretKeySelector)
+		if err := convert_v1_SecretKeySelector_To_api_SecretKeySelector(in.SecretKeyRef, out.SecretKeyRef, s); err != nil {
+			return err
+		}
+	} else {
+		out.SecretKeyRef = nil
 	}
 	return nil
 }
@@ -5617,6 +5673,21 @@ func convert_v1_Secret_To_api_Secret(in *Secret, out *api.Secret, s conversion.S
 	return autoconvert_v1_Secret_To_api_Secret(in, out, s)
 }
 
+func autoconvert_v1_SecretKeySelector_To_api_SecretKeySelector(in *SecretKeySelector, out *api.SecretKeySelector, s conversion.Scope) error {
+	if defaulting, found := s.DefaultingInterface(reflect.TypeOf(*in)); found {
+		defaulting.(func(*SecretKeySelector))(in)
+	}
+	if err := convert_v1_LocalObjectReference_To_api_LocalObjectReference(&in.LocalObjectReference, &out.LocalObjectReference, s); err != nil {
+		return err
+	}
+	out.Key = in.Key
+	return nil
+}
+
+func convert_v1_SecretKeySelector_To_api_SecretKeySelector(in *SecretKeySelector, out *api.SecretKeySelector, s conversion.Scope) error {
+	return autoconvert_v1_SecretKeySelector_To_api_SecretKeySelector(in, out, s)
+}
+
 func autoconvert_v1_SecretList_To_api_SecretList(in *SecretList, out *api.SecretList, s conversion.Scope) error {
 	if defaulting, found := s.DefaultingInterface(reflect.TypeOf(*in)); found {
 		defaulting.(func(*SecretList))(in)
@@ -5644,11 +5715,36 @@ func convert_v1_SecretList_To_api_SecretList(in *SecretList, out *api.SecretList
 	return autoconvert_v1_SecretList_To_api_SecretList(in, out, s)
 }
 
+func autoconvert_v1_SecretVolumeFile_To_api_SecretVolumeFile(in *SecretVolumeFile, out *api.SecretVolumeFile, s conversion.Scope) error {
+	if defaulting, found := s.DefaultingInterface(reflect.TypeOf(*in)); found {
+		defaulting.(func(*SecretVolumeFile))(in)
+	}
+	if err := convert_v1_SecretKeySelector_To_api_SecretKeySelector(&in.SecretKeySelector, &out.SecretKeySelector, s); err != nil {
+		return err
+	}
+	out.Path = in.Path
+	return nil
+}
+
+func convert_v1_SecretVolumeFile_To_api_SecretVolumeFile(in *SecretVolumeFile, out *api.SecretVolumeFile, s conversion.Scope) error {
+	return autoconvert_v1_SecretVolumeFile_To_api_SecretVolumeFile(in, out, s)
+}
+
 func autoconvert_v1_SecretVolumeSource_To_api_SecretVolumeSource(in *SecretVolumeSource, out *api.SecretVolumeSource, s conversion.Scope) error {
 	if defaulting, found := s.DefaultingInterface(reflect.TypeOf(*in)); found {
 		defaulting.(func(*SecretVolumeSource))(in)
 	}
 	out.SecretName = in.SecretName
+	if in.Items != nil {
+		out.Items = make([]api.SecretVolumeFile, len(in.Items))
+		for i := range in.Items {
+			if err := convert_v1_SecretVolumeFile_To_api_SecretVolumeFile(&in.Items[i], &out.Items[i], s); err != nil {
+				return err
+			}
+		}
+	} else {
+		out.Items = nil
+	}
 	return nil
 }
 
@@ -6187,7 +6283,9 @@ func init() {
 		autoconvert_api_ResourceQuota_To_v1_ResourceQuota,
 		autoconvert_api_ResourceRequirements_To_v1_ResourceRequirements,
 		autoconvert_api_SELinuxOptions_To_v1_SELinuxOptions,
+		autoconvert_api_SecretKeySelector_To_v1_SecretKeySelector,
 		autoconvert_api_SecretList_To_v1_SecretList,
+		autoconvert_api_SecretVolumeFile_To_v1_SecretVolumeFile,
 		autoconvert_api_SecretVolumeSource_To_v1_SecretVolumeSource,
 		autoconvert_api_Secret_To_v1_Secret,
 		autoconvert_api_SecurityContext_To_v1_SecurityContext,
@@ -6306,7 +6404,9 @@ func init() {
 		autoconvert_v1_ResourceQuota_To_api_ResourceQuota,
 		autoconvert_v1_ResourceRequirements_To_api_ResourceRequirements,
 		autoconvert_v1_SELinuxOptions_To_api_SELinuxOptions,
+		autoconvert_v1_SecretKeySelector_To_api_SecretKeySelector,
 		autoconvert_v1_SecretList_To_api_SecretList,
+		autoconvert_v1_SecretVolumeFile_To_api_SecretVolumeFile,
 		autoconvert_v1_SecretVolumeSource_To_api_SecretVolumeSource,
 		autoconvert_v1_Secret_To_api_Secret,
 		autoconvert_v1_SecurityContext_To_api_SecurityContext,

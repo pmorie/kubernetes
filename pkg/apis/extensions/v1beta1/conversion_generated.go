@@ -311,6 +311,14 @@ func autoconvert_api_EnvVarSource_To_v1_EnvVarSource(in *api.EnvVarSource, out *
 	} else {
 		out.FieldRef = nil
 	}
+	if in.SecretKeyRef != nil {
+		out.SecretKeyRef = new(v1.SecretKeySelector)
+		if err := convert_api_SecretKeySelector_To_v1_SecretKeySelector(in.SecretKeyRef, out.SecretKeyRef, s); err != nil {
+			return err
+		}
+	} else {
+		out.SecretKeyRef = nil
+	}
 	return nil
 }
 
@@ -850,11 +858,51 @@ func convert_api_SELinuxOptions_To_v1_SELinuxOptions(in *api.SELinuxOptions, out
 	return autoconvert_api_SELinuxOptions_To_v1_SELinuxOptions(in, out, s)
 }
 
+func autoconvert_api_SecretKeySelector_To_v1_SecretKeySelector(in *api.SecretKeySelector, out *v1.SecretKeySelector, s conversion.Scope) error {
+	if defaulting, found := s.DefaultingInterface(reflect.TypeOf(*in)); found {
+		defaulting.(func(*api.SecretKeySelector))(in)
+	}
+	if err := convert_api_LocalObjectReference_To_v1_LocalObjectReference(&in.LocalObjectReference, &out.LocalObjectReference, s); err != nil {
+		return err
+	}
+	out.Key = in.Key
+	return nil
+}
+
+func convert_api_SecretKeySelector_To_v1_SecretKeySelector(in *api.SecretKeySelector, out *v1.SecretKeySelector, s conversion.Scope) error {
+	return autoconvert_api_SecretKeySelector_To_v1_SecretKeySelector(in, out, s)
+}
+
+func autoconvert_api_SecretVolumeFile_To_v1_SecretVolumeFile(in *api.SecretVolumeFile, out *v1.SecretVolumeFile, s conversion.Scope) error {
+	if defaulting, found := s.DefaultingInterface(reflect.TypeOf(*in)); found {
+		defaulting.(func(*api.SecretVolumeFile))(in)
+	}
+	if err := convert_api_SecretKeySelector_To_v1_SecretKeySelector(&in.SecretKeySelector, &out.SecretKeySelector, s); err != nil {
+		return err
+	}
+	out.Path = in.Path
+	return nil
+}
+
+func convert_api_SecretVolumeFile_To_v1_SecretVolumeFile(in *api.SecretVolumeFile, out *v1.SecretVolumeFile, s conversion.Scope) error {
+	return autoconvert_api_SecretVolumeFile_To_v1_SecretVolumeFile(in, out, s)
+}
+
 func autoconvert_api_SecretVolumeSource_To_v1_SecretVolumeSource(in *api.SecretVolumeSource, out *v1.SecretVolumeSource, s conversion.Scope) error {
 	if defaulting, found := s.DefaultingInterface(reflect.TypeOf(*in)); found {
 		defaulting.(func(*api.SecretVolumeSource))(in)
 	}
 	out.SecretName = in.SecretName
+	if in.Items != nil {
+		out.Items = make([]v1.SecretVolumeFile, len(in.Items))
+		for i := range in.Items {
+			if err := convert_api_SecretVolumeFile_To_v1_SecretVolumeFile(&in.Items[i], &out.Items[i], s); err != nil {
+				return err
+			}
+		}
+	} else {
+		out.Items = nil
+	}
 	return nil
 }
 
@@ -1371,6 +1419,14 @@ func autoconvert_v1_EnvVarSource_To_api_EnvVarSource(in *v1.EnvVarSource, out *a
 		}
 	} else {
 		out.FieldRef = nil
+	}
+	if in.SecretKeyRef != nil {
+		out.SecretKeyRef = new(api.SecretKeySelector)
+		if err := convert_v1_SecretKeySelector_To_api_SecretKeySelector(in.SecretKeyRef, out.SecretKeyRef, s); err != nil {
+			return err
+		}
+	} else {
+		out.SecretKeyRef = nil
 	}
 	return nil
 }
@@ -1915,11 +1971,51 @@ func convert_v1_SELinuxOptions_To_api_SELinuxOptions(in *v1.SELinuxOptions, out 
 	return autoconvert_v1_SELinuxOptions_To_api_SELinuxOptions(in, out, s)
 }
 
+func autoconvert_v1_SecretKeySelector_To_api_SecretKeySelector(in *v1.SecretKeySelector, out *api.SecretKeySelector, s conversion.Scope) error {
+	if defaulting, found := s.DefaultingInterface(reflect.TypeOf(*in)); found {
+		defaulting.(func(*v1.SecretKeySelector))(in)
+	}
+	if err := convert_v1_LocalObjectReference_To_api_LocalObjectReference(&in.LocalObjectReference, &out.LocalObjectReference, s); err != nil {
+		return err
+	}
+	out.Key = in.Key
+	return nil
+}
+
+func convert_v1_SecretKeySelector_To_api_SecretKeySelector(in *v1.SecretKeySelector, out *api.SecretKeySelector, s conversion.Scope) error {
+	return autoconvert_v1_SecretKeySelector_To_api_SecretKeySelector(in, out, s)
+}
+
+func autoconvert_v1_SecretVolumeFile_To_api_SecretVolumeFile(in *v1.SecretVolumeFile, out *api.SecretVolumeFile, s conversion.Scope) error {
+	if defaulting, found := s.DefaultingInterface(reflect.TypeOf(*in)); found {
+		defaulting.(func(*v1.SecretVolumeFile))(in)
+	}
+	if err := convert_v1_SecretKeySelector_To_api_SecretKeySelector(&in.SecretKeySelector, &out.SecretKeySelector, s); err != nil {
+		return err
+	}
+	out.Path = in.Path
+	return nil
+}
+
+func convert_v1_SecretVolumeFile_To_api_SecretVolumeFile(in *v1.SecretVolumeFile, out *api.SecretVolumeFile, s conversion.Scope) error {
+	return autoconvert_v1_SecretVolumeFile_To_api_SecretVolumeFile(in, out, s)
+}
+
 func autoconvert_v1_SecretVolumeSource_To_api_SecretVolumeSource(in *v1.SecretVolumeSource, out *api.SecretVolumeSource, s conversion.Scope) error {
 	if defaulting, found := s.DefaultingInterface(reflect.TypeOf(*in)); found {
 		defaulting.(func(*v1.SecretVolumeSource))(in)
 	}
 	out.SecretName = in.SecretName
+	if in.Items != nil {
+		out.Items = make([]api.SecretVolumeFile, len(in.Items))
+		for i := range in.Items {
+			if err := convert_v1_SecretVolumeFile_To_api_SecretVolumeFile(&in.Items[i], &out.Items[i], s); err != nil {
+				return err
+			}
+		}
+	} else {
+		out.Items = nil
+	}
 	return nil
 }
 
@@ -4141,6 +4237,8 @@ func init() {
 		autoconvert_api_RBDVolumeSource_To_v1_RBDVolumeSource,
 		autoconvert_api_ResourceRequirements_To_v1_ResourceRequirements,
 		autoconvert_api_SELinuxOptions_To_v1_SELinuxOptions,
+		autoconvert_api_SecretKeySelector_To_v1_SecretKeySelector,
+		autoconvert_api_SecretVolumeFile_To_v1_SecretVolumeFile,
 		autoconvert_api_SecretVolumeSource_To_v1_SecretVolumeSource,
 		autoconvert_api_SecurityContext_To_v1_SecurityContext,
 		autoconvert_api_TCPSocketAction_To_v1_TCPSocketAction,
@@ -4227,6 +4325,8 @@ func init() {
 		autoconvert_v1_RBDVolumeSource_To_api_RBDVolumeSource,
 		autoconvert_v1_ResourceRequirements_To_api_ResourceRequirements,
 		autoconvert_v1_SELinuxOptions_To_api_SELinuxOptions,
+		autoconvert_v1_SecretKeySelector_To_api_SecretKeySelector,
+		autoconvert_v1_SecretVolumeFile_To_api_SecretVolumeFile,
 		autoconvert_v1_SecretVolumeSource_To_api_SecretVolumeSource,
 		autoconvert_v1_SecurityContext_To_api_SecurityContext,
 		autoconvert_v1_TCPSocketAction_To_api_TCPSocketAction,

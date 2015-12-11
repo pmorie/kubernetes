@@ -484,6 +484,14 @@ func deepCopy_api_EnvVarSource(in EnvVarSource, out *EnvVarSource, c *conversion
 	} else {
 		out.FieldRef = nil
 	}
+	if in.SecretKeyRef != nil {
+		out.SecretKeyRef = new(SecretKeySelector)
+		if err := deepCopy_api_SecretKeySelector(*in.SecretKeyRef, out.SecretKeyRef, c); err != nil {
+			return err
+		}
+	} else {
+		out.SecretKeyRef = nil
+	}
 	return nil
 }
 
@@ -1919,6 +1927,14 @@ func deepCopy_api_Secret(in Secret, out *Secret, c *conversion.Cloner) error {
 	return nil
 }
 
+func deepCopy_api_SecretKeySelector(in SecretKeySelector, out *SecretKeySelector, c *conversion.Cloner) error {
+	if err := deepCopy_api_LocalObjectReference(in.LocalObjectReference, &out.LocalObjectReference, c); err != nil {
+		return err
+	}
+	out.Key = in.Key
+	return nil
+}
+
 func deepCopy_api_SecretList(in SecretList, out *SecretList, c *conversion.Cloner) error {
 	if err := deepCopy_unversioned_TypeMeta(in.TypeMeta, &out.TypeMeta, c); err != nil {
 		return err
@@ -1939,8 +1955,26 @@ func deepCopy_api_SecretList(in SecretList, out *SecretList, c *conversion.Clone
 	return nil
 }
 
+func deepCopy_api_SecretVolumeFile(in SecretVolumeFile, out *SecretVolumeFile, c *conversion.Cloner) error {
+	if err := deepCopy_api_SecretKeySelector(in.SecretKeySelector, &out.SecretKeySelector, c); err != nil {
+		return err
+	}
+	out.Path = in.Path
+	return nil
+}
+
 func deepCopy_api_SecretVolumeSource(in SecretVolumeSource, out *SecretVolumeSource, c *conversion.Cloner) error {
 	out.SecretName = in.SecretName
+	if in.Items != nil {
+		out.Items = make([]SecretVolumeFile, len(in.Items))
+		for i := range in.Items {
+			if err := deepCopy_api_SecretVolumeFile(in.Items[i], &out.Items[i], c); err != nil {
+				return err
+			}
+		}
+	} else {
+		out.Items = nil
+	}
 	return nil
 }
 
@@ -2431,7 +2465,9 @@ func init() {
 		deepCopy_api_ResourceRequirements,
 		deepCopy_api_SELinuxOptions,
 		deepCopy_api_Secret,
+		deepCopy_api_SecretKeySelector,
 		deepCopy_api_SecretList,
+		deepCopy_api_SecretVolumeFile,
 		deepCopy_api_SecretVolumeSource,
 		deepCopy_api_SecurityContext,
 		deepCopy_api_SerializedReference,

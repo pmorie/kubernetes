@@ -13274,14 +13274,39 @@
    },
    "v1.SecretVolumeSource": {
     "id": "v1.SecretVolumeSource",
-    "description": "SecretVolumeSource adapts a Secret into a VolumeSource. More info: http://releases.k8s.io/HEAD/docs/design/secrets.md",
-    "required": [
-     "secretName"
-    ],
+    "description": "SecretVolumeSource adapts a Secret into a VolumeSource.\n\nThe contents of the target Secret's Data field will be presented in a volume as files using the keys in the Data field as the file names.",
     "properties": {
      "secretName": {
       "type": "string",
-      "description": "SecretName is the name of a secret in the pod's namespace. More info: http://releases.k8s.io/HEAD/docs/user-guide/volumes.md#secrets"
+      "description": "Name of the secret in the pod's namespace to use.  May not be specified if items is specified."
+     },
+     "items": {
+      "type": "array",
+      "items": {
+       "$ref": "v1.SecretVolumeFile"
+      },
+      "description": "A list of projections to make into the volume.  May not be specified if SecretName is specified."
+     }
+    }
+   },
+   "v1.SecretVolumeFile": {
+    "id": "v1.SecretVolumeFile",
+    "description": "SecretVolumeFile represents a single secret key projected into a file.",
+    "required": [
+     "key"
+    ],
+    "properties": {
+     "name": {
+      "type": "string",
+      "description": "Name of the referent. More info: http://releases.k8s.io/HEAD/docs/user-guide/identifiers.md#names"
+     },
+     "key": {
+      "type": "string",
+      "description": "The key of the secret to select from.  Must be a valid secret key."
+     },
+     "path": {
+      "type": "string",
+      "description": "The path of the key within the volume.  Must be a relative path.  May not contain '..'."
      }
     }
    },
@@ -13501,13 +13526,31 @@
    "v1.EnvVarSource": {
     "id": "v1.EnvVarSource",
     "description": "EnvVarSource represents a source for the value of an EnvVar.",
-    "required": [
-     "fieldRef"
-    ],
     "properties": {
      "fieldRef": {
       "$ref": "v1.ObjectFieldSelector",
       "description": "Selects a field of the pod. Only name and namespace are supported."
+     },
+     "secretKeyRef": {
+      "$ref": "v1.SecretKeySelector",
+      "description": "Selects a key of a secret in the pod's namespace"
+     }
+    }
+   },
+   "v1.SecretKeySelector": {
+    "id": "v1.SecretKeySelector",
+    "description": "SecretKeySelector selects a key of a Secret.",
+    "required": [
+     "key"
+    ],
+    "properties": {
+     "name": {
+      "type": "string",
+      "description": "Name of the referent. More info: http://releases.k8s.io/HEAD/docs/user-guide/identifiers.md#names"
+     },
+     "key": {
+      "type": "string",
+      "description": "The key of the secret to select from.  Must be a valid secret key."
      }
     }
    },
