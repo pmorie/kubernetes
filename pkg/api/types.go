@@ -217,6 +217,8 @@ type VolumeSource struct {
 	FC *FCVolumeSource `json:"fc,omitempty"`
 	// AzureFile represents an Azure File Service mount on the host and bind mount to the pod.
 	AzureFile *AzureFileVolumeSource `json:"azureFile,omitempty"`
+	// ConfigMap represents a configMap that should populate this volume
+	ConfigMap *ConfigMapVolumeSource `json:"configMap,omitempty"`
 }
 
 // Similar to VolumeSource but meant for the administrator who creates PVs.

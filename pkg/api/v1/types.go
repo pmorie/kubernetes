@@ -263,6 +263,8 @@ type VolumeSource struct {
 	FC *FCVolumeSource `json:"fc,omitempty"`
 	// AzureFile represents an Azure File Service mount on the host and bind mount to the pod.
 	AzureFile *AzureFileVolumeSource `json:"azureFile,omitempty"`
+	// ConfigMap represents a configMap that should populate this volume
+	ConfigMap *ConfigMapVolumeSource `json:"configMap,omitempty"`
 }
 
 // PersistentVolumeClaimVolumeSource references the user's PVC in the same namespace.
@@ -804,6 +806,28 @@ type AzureFileVolumeSource struct {
 	// Defaults to false (read/write). ReadOnly here will force
 	// the ReadOnly setting in VolumeMounts.
 	ReadOnly bool `json:"readOnly,omitempty"`
+}
+
+// Adapts a ConfigMap into a volume.
+type ConfigMapVolumeSource struct {
+	LocalObjectReference `json:",inline"`
+	// If unspecified, each key-value pair in the Data field of the
+	// referenced ConfigMap will be projected into the volume as a file whose name
+	// is the key and content is the value.
+	// If specified, the listed keys will be project into the specified paths, and
+	// unlisted keys will not be present.
+	Items []KeyToPath `json:"items,omitempty"`
+}
+
+// Maps a string key to a path within a volume.
+type KeyToPath struct {
+	// The key to project.
+	Key string `json:"key"`
+
+	// The relative path of the file to map the key to.
+	// May not begin with '/'.
+	// May not contain the string '..'.
+	Path string `json:"path"`
 }
 
 // ContainerPort represents a network port in a single container.
