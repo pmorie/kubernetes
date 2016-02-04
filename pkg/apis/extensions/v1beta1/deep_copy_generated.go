@@ -124,14 +124,6 @@ func deepCopy_v1_CinderVolumeSource(in v1.CinderVolumeSource, out *v1.CinderVolu
 	return nil
 }
 
-func deepCopy_v1_ConfigMapKeySelector(in v1.ConfigMapKeySelector, out *v1.ConfigMapKeySelector, c *conversion.Cloner) error {
-	if err := deepCopy_v1_LocalObjectReference(in.LocalObjectReference, &out.LocalObjectReference, c); err != nil {
-		return err
-	}
-	out.Key = in.Key
-	return nil
-}
-
 func deepCopy_v1_Container(in v1.Container, out *v1.Container, c *conversion.Cloner) error {
 	out.Name = in.Name
 	out.Image = in.Image
@@ -283,22 +275,6 @@ func deepCopy_v1_EnvVarSource(in v1.EnvVarSource, out *v1.EnvVarSource, c *conve
 		}
 	} else {
 		out.FieldRef = nil
-	}
-	if in.ConfigMapKeyRef != nil {
-		out.ConfigMapKeyRef = new(v1.ConfigMapKeySelector)
-		if err := deepCopy_v1_ConfigMapKeySelector(*in.ConfigMapKeyRef, out.ConfigMapKeyRef, c); err != nil {
-			return err
-		}
-	} else {
-		out.ConfigMapKeyRef = nil
-	}
-	if in.SecretKeyRef != nil {
-		out.SecretKeyRef = new(v1.SecretKeySelector)
-		if err := deepCopy_v1_SecretKeySelector(*in.SecretKeyRef, out.SecretKeyRef, c); err != nil {
-			return err
-		}
-	} else {
-		out.SecretKeyRef = nil
 	}
 	return nil
 }
@@ -735,14 +711,6 @@ func deepCopy_v1_SELinuxOptions(in v1.SELinuxOptions, out *v1.SELinuxOptions, c 
 	out.Role = in.Role
 	out.Type = in.Type
 	out.Level = in.Level
-	return nil
-}
-
-func deepCopy_v1_SecretKeySelector(in v1.SecretKeySelector, out *v1.SecretKeySelector, c *conversion.Cloner) error {
-	if err := deepCopy_v1_LocalObjectReference(in.LocalObjectReference, &out.LocalObjectReference, c); err != nil {
-		return err
-	}
-	out.Key = in.Key
 	return nil
 }
 
@@ -1838,7 +1806,6 @@ func init() {
 		deepCopy_v1_Capabilities,
 		deepCopy_v1_CephFSVolumeSource,
 		deepCopy_v1_CinderVolumeSource,
-		deepCopy_v1_ConfigMapKeySelector,
 		deepCopy_v1_Container,
 		deepCopy_v1_ContainerPort,
 		deepCopy_v1_DownwardAPIVolumeFile,
@@ -1872,7 +1839,6 @@ func init() {
 		deepCopy_v1_RBDVolumeSource,
 		deepCopy_v1_ResourceRequirements,
 		deepCopy_v1_SELinuxOptions,
-		deepCopy_v1_SecretKeySelector,
 		deepCopy_v1_SecretVolumeSource,
 		deepCopy_v1_SecurityContext,
 		deepCopy_v1_TCPSocketAction,

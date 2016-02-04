@@ -135,15 +135,6 @@ func (ConfigMap) SwaggerDoc() map[string]string {
 	return map_ConfigMap
 }
 
-var map_ConfigMapKeySelector = map[string]string{
-	"":    "Selects a key from a ConfigMap.",
-	"key": "The key to select.",
-}
-
-func (ConfigMapKeySelector) SwaggerDoc() map[string]string {
-	return map_ConfigMapKeySelector
-}
-
 var map_ConfigMapList = map[string]string{
 	"":         "ConfigMapList is a resource containing a list of ConfigMap objects.",
 	"metadata": "More info: http://releases.k8s.io/HEAD/docs/devel/api-conventions.md#metadata",
@@ -1350,15 +1341,6 @@ var map_Secret = map[string]string{
 
 func (Secret) SwaggerDoc() map[string]string {
 	return map_Secret
-}
-
-var map_SecretKeySelector = map[string]string{
-	"":    "SecretKeySelector selects a key of a Secret.",
-	"key": "The key of the secret to select from.  Must be a valid secret key.",
-}
-
-func (SecretKeySelector) SwaggerDoc() map[string]string {
-	return map_SecretKeySelector
 }
 
 var map_SecretList = map[string]string{

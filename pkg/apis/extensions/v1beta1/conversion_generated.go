@@ -117,21 +117,6 @@ func Convert_api_CinderVolumeSource_To_v1_CinderVolumeSource(in *api.CinderVolum
 	return autoConvert_api_CinderVolumeSource_To_v1_CinderVolumeSource(in, out, s)
 }
 
-func autoConvert_api_ConfigMapKeySelector_To_v1_ConfigMapKeySelector(in *api.ConfigMapKeySelector, out *v1.ConfigMapKeySelector, s conversion.Scope) error {
-	if defaulting, found := s.DefaultingInterface(reflect.TypeOf(*in)); found {
-		defaulting.(func(*api.ConfigMapKeySelector))(in)
-	}
-	if err := Convert_api_LocalObjectReference_To_v1_LocalObjectReference(&in.LocalObjectReference, &out.LocalObjectReference, s); err != nil {
-		return err
-	}
-	out.Key = in.Key
-	return nil
-}
-
-func Convert_api_ConfigMapKeySelector_To_v1_ConfigMapKeySelector(in *api.ConfigMapKeySelector, out *v1.ConfigMapKeySelector, s conversion.Scope) error {
-	return autoConvert_api_ConfigMapKeySelector_To_v1_ConfigMapKeySelector(in, out, s)
-}
-
 func autoConvert_api_Container_To_v1_Container(in *api.Container, out *v1.Container, s conversion.Scope) error {
 	if defaulting, found := s.DefaultingInterface(reflect.TypeOf(*in)); found {
 		defaulting.(func(*api.Container))(in)
@@ -334,24 +319,6 @@ func autoConvert_api_EnvVarSource_To_v1_EnvVarSource(in *api.EnvVarSource, out *
 		}
 	} else {
 		out.FieldRef = nil
-	}
-	// unable to generate simple pointer conversion for api.ConfigMapKeySelector -> v1.ConfigMapKeySelector
-	if in.ConfigMapKeyRef != nil {
-		out.ConfigMapKeyRef = new(v1.ConfigMapKeySelector)
-		if err := Convert_api_ConfigMapKeySelector_To_v1_ConfigMapKeySelector(in.ConfigMapKeyRef, out.ConfigMapKeyRef, s); err != nil {
-			return err
-		}
-	} else {
-		out.ConfigMapKeyRef = nil
-	}
-	// unable to generate simple pointer conversion for api.SecretKeySelector -> v1.SecretKeySelector
-	if in.SecretKeyRef != nil {
-		out.SecretKeyRef = new(v1.SecretKeySelector)
-		if err := Convert_api_SecretKeySelector_To_v1_SecretKeySelector(in.SecretKeyRef, out.SecretKeyRef, s); err != nil {
-			return err
-		}
-	} else {
-		out.SecretKeyRef = nil
 	}
 	return nil
 }
@@ -960,21 +927,6 @@ func Convert_api_SELinuxOptions_To_v1_SELinuxOptions(in *api.SELinuxOptions, out
 	return autoConvert_api_SELinuxOptions_To_v1_SELinuxOptions(in, out, s)
 }
 
-func autoConvert_api_SecretKeySelector_To_v1_SecretKeySelector(in *api.SecretKeySelector, out *v1.SecretKeySelector, s conversion.Scope) error {
-	if defaulting, found := s.DefaultingInterface(reflect.TypeOf(*in)); found {
-		defaulting.(func(*api.SecretKeySelector))(in)
-	}
-	if err := Convert_api_LocalObjectReference_To_v1_LocalObjectReference(&in.LocalObjectReference, &out.LocalObjectReference, s); err != nil {
-		return err
-	}
-	out.Key = in.Key
-	return nil
-}
-
-func Convert_api_SecretKeySelector_To_v1_SecretKeySelector(in *api.SecretKeySelector, out *v1.SecretKeySelector, s conversion.Scope) error {
-	return autoConvert_api_SecretKeySelector_To_v1_SecretKeySelector(in, out, s)
-}
-
 func autoConvert_api_SecretVolumeSource_To_v1_SecretVolumeSource(in *api.SecretVolumeSource, out *v1.SecretVolumeSource, s conversion.Scope) error {
 	if defaulting, found := s.DefaultingInterface(reflect.TypeOf(*in)); found {
 		defaulting.(func(*api.SecretVolumeSource))(in)
@@ -1329,21 +1281,6 @@ func Convert_v1_CinderVolumeSource_To_api_CinderVolumeSource(in *v1.CinderVolume
 	return autoConvert_v1_CinderVolumeSource_To_api_CinderVolumeSource(in, out, s)
 }
 
-func autoConvert_v1_ConfigMapKeySelector_To_api_ConfigMapKeySelector(in *v1.ConfigMapKeySelector, out *api.ConfigMapKeySelector, s conversion.Scope) error {
-	if defaulting, found := s.DefaultingInterface(reflect.TypeOf(*in)); found {
-		defaulting.(func(*v1.ConfigMapKeySelector))(in)
-	}
-	if err := Convert_v1_LocalObjectReference_To_api_LocalObjectReference(&in.LocalObjectReference, &out.LocalObjectReference, s); err != nil {
-		return err
-	}
-	out.Key = in.Key
-	return nil
-}
-
-func Convert_v1_ConfigMapKeySelector_To_api_ConfigMapKeySelector(in *v1.ConfigMapKeySelector, out *api.ConfigMapKeySelector, s conversion.Scope) error {
-	return autoConvert_v1_ConfigMapKeySelector_To_api_ConfigMapKeySelector(in, out, s)
-}
-
 func autoConvert_v1_Container_To_api_Container(in *v1.Container, out *api.Container, s conversion.Scope) error {
 	if defaulting, found := s.DefaultingInterface(reflect.TypeOf(*in)); found {
 		defaulting.(func(*v1.Container))(in)
@@ -1546,24 +1483,6 @@ func autoConvert_v1_EnvVarSource_To_api_EnvVarSource(in *v1.EnvVarSource, out *a
 		}
 	} else {
 		out.FieldRef = nil
-	}
-	// unable to generate simple pointer conversion for v1.ConfigMapKeySelector -> api.ConfigMapKeySelector
-	if in.ConfigMapKeyRef != nil {
-		out.ConfigMapKeyRef = new(api.ConfigMapKeySelector)
-		if err := Convert_v1_ConfigMapKeySelector_To_api_ConfigMapKeySelector(in.ConfigMapKeyRef, out.ConfigMapKeyRef, s); err != nil {
-			return err
-		}
-	} else {
-		out.ConfigMapKeyRef = nil
-	}
-	// unable to generate simple pointer conversion for v1.SecretKeySelector -> api.SecretKeySelector
-	if in.SecretKeyRef != nil {
-		out.SecretKeyRef = new(api.SecretKeySelector)
-		if err := Convert_v1_SecretKeySelector_To_api_SecretKeySelector(in.SecretKeyRef, out.SecretKeyRef, s); err != nil {
-			return err
-		}
-	} else {
-		out.SecretKeyRef = nil
 	}
 	return nil
 }
@@ -2146,21 +2065,6 @@ func autoConvert_v1_SELinuxOptions_To_api_SELinuxOptions(in *v1.SELinuxOptions, 
 
 func Convert_v1_SELinuxOptions_To_api_SELinuxOptions(in *v1.SELinuxOptions, out *api.SELinuxOptions, s conversion.Scope) error {
 	return autoConvert_v1_SELinuxOptions_To_api_SELinuxOptions(in, out, s)
-}
-
-func autoConvert_v1_SecretKeySelector_To_api_SecretKeySelector(in *v1.SecretKeySelector, out *api.SecretKeySelector, s conversion.Scope) error {
-	if defaulting, found := s.DefaultingInterface(reflect.TypeOf(*in)); found {
-		defaulting.(func(*v1.SecretKeySelector))(in)
-	}
-	if err := Convert_v1_LocalObjectReference_To_api_LocalObjectReference(&in.LocalObjectReference, &out.LocalObjectReference, s); err != nil {
-		return err
-	}
-	out.Key = in.Key
-	return nil
-}
-
-func Convert_v1_SecretKeySelector_To_api_SecretKeySelector(in *v1.SecretKeySelector, out *api.SecretKeySelector, s conversion.Scope) error {
-	return autoConvert_v1_SecretKeySelector_To_api_SecretKeySelector(in, out, s)
 }
 
 func autoConvert_v1_SecretVolumeSource_To_api_SecretVolumeSource(in *v1.SecretVolumeSource, out *api.SecretVolumeSource, s conversion.Scope) error {
@@ -4790,7 +4694,6 @@ func init() {
 		autoConvert_api_Capabilities_To_v1_Capabilities,
 		autoConvert_api_CephFSVolumeSource_To_v1_CephFSVolumeSource,
 		autoConvert_api_CinderVolumeSource_To_v1_CinderVolumeSource,
-		autoConvert_api_ConfigMapKeySelector_To_v1_ConfigMapKeySelector,
 		autoConvert_api_ContainerPort_To_v1_ContainerPort,
 		autoConvert_api_Container_To_v1_Container,
 		autoConvert_api_DownwardAPIVolumeFile_To_v1_DownwardAPIVolumeFile,
@@ -4824,7 +4727,6 @@ func init() {
 		autoConvert_api_RBDVolumeSource_To_v1_RBDVolumeSource,
 		autoConvert_api_ResourceRequirements_To_v1_ResourceRequirements,
 		autoConvert_api_SELinuxOptions_To_v1_SELinuxOptions,
-		autoConvert_api_SecretKeySelector_To_v1_SecretKeySelector,
 		autoConvert_api_SecretVolumeSource_To_v1_SecretVolumeSource,
 		autoConvert_api_SecurityContext_To_v1_SecurityContext,
 		autoConvert_api_TCPSocketAction_To_v1_TCPSocketAction,
@@ -4888,7 +4790,6 @@ func init() {
 		autoConvert_v1_Capabilities_To_api_Capabilities,
 		autoConvert_v1_CephFSVolumeSource_To_api_CephFSVolumeSource,
 		autoConvert_v1_CinderVolumeSource_To_api_CinderVolumeSource,
-		autoConvert_v1_ConfigMapKeySelector_To_api_ConfigMapKeySelector,
 		autoConvert_v1_ContainerPort_To_api_ContainerPort,
 		autoConvert_v1_Container_To_api_Container,
 		autoConvert_v1_DownwardAPIVolumeFile_To_api_DownwardAPIVolumeFile,
@@ -4921,7 +4822,6 @@ func init() {
 		autoConvert_v1_RBDVolumeSource_To_api_RBDVolumeSource,
 		autoConvert_v1_ResourceRequirements_To_api_ResourceRequirements,
 		autoConvert_v1_SELinuxOptions_To_api_SELinuxOptions,
-		autoConvert_v1_SecretKeySelector_To_api_SecretKeySelector,
 		autoConvert_v1_SecretVolumeSource_To_api_SecretVolumeSource,
 		autoConvert_v1_SecurityContext_To_api_SecurityContext,
 		autoConvert_v1_TCPSocketAction_To_api_TCPSocketAction,

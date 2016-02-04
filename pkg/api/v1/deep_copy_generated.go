@@ -203,14 +203,6 @@ func deepCopy_v1_ConfigMap(in ConfigMap, out *ConfigMap, c *conversion.Cloner) e
 	return nil
 }
 
-func deepCopy_v1_ConfigMapKeySelector(in ConfigMapKeySelector, out *ConfigMapKeySelector, c *conversion.Cloner) error {
-	if err := deepCopy_v1_LocalObjectReference(in.LocalObjectReference, &out.LocalObjectReference, c); err != nil {
-		return err
-	}
-	out.Key = in.Key
-	return nil
-}
-
 func deepCopy_v1_ConfigMapList(in ConfigMapList, out *ConfigMapList, c *conversion.Cloner) error {
 	if err := deepCopy_unversioned_TypeMeta(in.TypeMeta, &out.TypeMeta, c); err != nil {
 		return err
@@ -579,22 +571,6 @@ func deepCopy_v1_EnvVarSource(in EnvVarSource, out *EnvVarSource, c *conversion.
 		}
 	} else {
 		out.FieldRef = nil
-	}
-	if in.ConfigMapKeyRef != nil {
-		out.ConfigMapKeyRef = new(ConfigMapKeySelector)
-		if err := deepCopy_v1_ConfigMapKeySelector(*in.ConfigMapKeyRef, out.ConfigMapKeyRef, c); err != nil {
-			return err
-		}
-	} else {
-		out.ConfigMapKeyRef = nil
-	}
-	if in.SecretKeyRef != nil {
-		out.SecretKeyRef = new(SecretKeySelector)
-		if err := deepCopy_v1_SecretKeySelector(*in.SecretKeyRef, out.SecretKeyRef, c); err != nil {
-			return err
-		}
-	} else {
-		out.SecretKeyRef = nil
 	}
 	return nil
 }
@@ -2111,15 +2087,6 @@ func deepCopy_v1_Secret(in Secret, out *Secret, c *conversion.Cloner) error {
 	out.Type = in.Type
 	return nil
 }
-
-func deepCopy_v1_SecretKeySelector(in SecretKeySelector, out *SecretKeySelector, c *conversion.Cloner) error {
-	if err := deepCopy_v1_LocalObjectReference(in.LocalObjectReference, &out.LocalObjectReference, c); err != nil {
-		return err
-	}
-	out.Key = in.Key
-	return nil
-}
-
 func deepCopy_v1_SecretList(in SecretList, out *SecretList, c *conversion.Cloner) error {
 	if err := deepCopy_unversioned_TypeMeta(in.TypeMeta, &out.TypeMeta, c); err != nil {
 		return err
@@ -2542,7 +2509,6 @@ func init() {
 		deepCopy_v1_ComponentStatus,
 		deepCopy_v1_ComponentStatusList,
 		deepCopy_v1_ConfigMap,
-		deepCopy_v1_ConfigMapKeySelector,
 		deepCopy_v1_ConfigMapList,
 		deepCopy_v1_Container,
 		deepCopy_v1_ContainerImage,
@@ -2643,7 +2609,6 @@ func init() {
 		deepCopy_v1_ResourceRequirements,
 		deepCopy_v1_SELinuxOptions,
 		deepCopy_v1_Secret,
-		deepCopy_v1_SecretKeySelector,
 		deepCopy_v1_SecretList,
 		deepCopy_v1_SecretVolumeSource,
 		deepCopy_v1_SecurityContext,
