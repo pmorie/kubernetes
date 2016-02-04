@@ -367,8 +367,8 @@ func (EnvVar) SwaggerDoc() map[string]string {
 var map_EnvVarSource = map[string]string{
 	"":                "EnvVarSource represents a source for the value of an EnvVar.",
 	"fieldRef":        "Selects a field of the pod; only name and namespace are supported.",
-	"configMapKeyRef": "Selects a key of a ConfigMap.",
-	"secretKeyRef":    "Selects a key of a secret in the pod's namespace",
+	"configMapKeyRef": "Selects a key of a ConfigMap in the pod's namespace.",
+	"secretKeyRef":    "Selects a key of a Secret in the pod's namespace.",
 }
 
 func (EnvVarSource) SwaggerDoc() map[string]string {
@@ -647,6 +647,15 @@ var map_LocalObjectReference = map[string]string{
 
 func (LocalObjectReference) SwaggerDoc() map[string]string {
 	return map_LocalObjectReference
+}
+
+var map_MapKeySelector = map[string]string{
+	"":    "Selects a key from a map.",
+	"key": "The key to select.",
+}
+
+func (MapKeySelector) SwaggerDoc() map[string]string {
+	return map_MapKeySelector
 }
 
 var map_NFSVolumeSource = map[string]string{
@@ -1341,6 +1350,15 @@ var map_Secret = map[string]string{
 
 func (Secret) SwaggerDoc() map[string]string {
 	return map_Secret
+}
+
+var map_SecretKeySelector = map[string]string{
+	"":    "SecretKeySelector selects a key of a Secret.",
+	"key": "The key of the secret to select from.  Must be a valid secret key.",
+}
+
+func (SecretKeySelector) SwaggerDoc() map[string]string {
+	return map_SecretKeySelector
 }
 
 var map_SecretList = map[string]string{

@@ -276,6 +276,22 @@ func deepCopy_v1_EnvVarSource(in v1.EnvVarSource, out *v1.EnvVarSource, c *conve
 	} else {
 		out.FieldRef = nil
 	}
+	if in.ConfigMapKeyRef != nil {
+		out.ConfigMapKeyRef = new(v1.MapKeySelector)
+		if err := deepCopy_v1_MapKeySelector(*in.ConfigMapKeyRef, out.ConfigMapKeyRef, c); err != nil {
+			return err
+		}
+	} else {
+		out.ConfigMapKeyRef = nil
+	}
+	if in.SecretKeyRef != nil {
+		out.SecretKeyRef = new(v1.MapKeySelector)
+		if err := deepCopy_v1_MapKeySelector(*in.SecretKeyRef, out.SecretKeyRef, c); err != nil {
+			return err
+		}
+	} else {
+		out.SecretKeyRef = nil
+	}
 	return nil
 }
 
@@ -456,6 +472,14 @@ func deepCopy_v1_LoadBalancerStatus(in v1.LoadBalancerStatus, out *v1.LoadBalanc
 
 func deepCopy_v1_LocalObjectReference(in v1.LocalObjectReference, out *v1.LocalObjectReference, c *conversion.Cloner) error {
 	out.Name = in.Name
+	return nil
+}
+
+func deepCopy_v1_MapKeySelector(in v1.MapKeySelector, out *v1.MapKeySelector, c *conversion.Cloner) error {
+	if err := deepCopy_v1_LocalObjectReference(in.LocalObjectReference, &out.LocalObjectReference, c); err != nil {
+		return err
+	}
+	out.Key = in.Key
 	return nil
 }
 
@@ -1828,6 +1852,7 @@ func init() {
 		deepCopy_v1_LoadBalancerIngress,
 		deepCopy_v1_LoadBalancerStatus,
 		deepCopy_v1_LocalObjectReference,
+		deepCopy_v1_MapKeySelector,
 		deepCopy_v1_NFSVolumeSource,
 		deepCopy_v1_ObjectFieldSelector,
 		deepCopy_v1_ObjectMeta,

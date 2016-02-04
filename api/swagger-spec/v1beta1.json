@@ -4087,18 +4087,18 @@
       "description": "Selects a field of the pod; only name and namespace are supported."
      },
      "configMapKeyRef": {
-      "$ref": "v1.ConfigMapKeySelector",
-      "description": "Selects a key of a ConfigMap."
+      "$ref": "v1.MapKeySelector",
+      "description": "Selects a key of a ConfigMap in the pod's namespace."
      },
      "secretKeyRef": {
-      "$ref": "v1.SecretKeySelector",
-      "description": "Selects a key of a secret in the pod's namespace"
+      "$ref": "v1.MapKeySelector",
+      "description": "Selects a key of a Secret in the pod's namespace."
      }
     }
    },
-   "v1.ConfigMapKeySelector": {
-    "id": "v1.ConfigMapKeySelector",
-    "description": "Selects a key from a ConfigMap.",
+   "v1.MapKeySelector": {
+    "id": "v1.MapKeySelector",
+    "description": "Selects a key from a map.",
     "required": [
      "key"
     ],
@@ -4110,23 +4110,6 @@
      "key": {
       "type": "string",
       "description": "The key to select."
-     }
-    }
-   },
-   "v1.SecretKeySelector": {
-    "id": "v1.SecretKeySelector",
-    "description": "SecretKeySelector selects a key of a Secret.",
-    "required": [
-     "key"
-    ],
-    "properties": {
-     "name": {
-      "type": "string",
-      "description": "Name of the referent. More info: http://releases.k8s.io/HEAD/docs/user-guide/identifiers.md#names"
-     },
-     "key": {
-      "type": "string",
-      "description": "The key of the secret to select from.  Must be a valid secret key."
      }
     }
    },

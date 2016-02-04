@@ -13376,7 +13376,7 @@ func (x *EnvVarSource) codecDecodeSelfFromMap(l int, d *codec1978.Decoder) {
 				}
 			} else {
 				if x.ConfigMapKeyRef == nil {
-					x.ConfigMapKeyRef = new(ConfigMapKeySelector)
+					x.ConfigMapKeyRef = new(MapKeySelector)
 				}
 				x.ConfigMapKeyRef.CodecDecodeSelf(d)
 			}
@@ -13387,7 +13387,7 @@ func (x *EnvVarSource) codecDecodeSelfFromMap(l int, d *codec1978.Decoder) {
 				}
 			} else {
 				if x.SecretKeyRef == nil {
-					x.SecretKeyRef = new(SecretKeySelector)
+					x.SecretKeyRef = new(MapKeySelector)
 				}
 				x.SecretKeyRef.CodecDecodeSelf(d)
 			}
@@ -13443,7 +13443,7 @@ func (x *EnvVarSource) codecDecodeSelfFromArray(l int, d *codec1978.Decoder) {
 		}
 	} else {
 		if x.ConfigMapKeyRef == nil {
-			x.ConfigMapKeyRef = new(ConfigMapKeySelector)
+			x.ConfigMapKeyRef = new(MapKeySelector)
 		}
 		x.ConfigMapKeyRef.CodecDecodeSelf(d)
 	}
@@ -13464,7 +13464,7 @@ func (x *EnvVarSource) codecDecodeSelfFromArray(l int, d *codec1978.Decoder) {
 		}
 	} else {
 		if x.SecretKeyRef == nil {
-			x.SecretKeyRef = new(SecretKeySelector)
+			x.SecretKeyRef = new(MapKeySelector)
 		}
 		x.SecretKeyRef.CodecDecodeSelf(d)
 	}
@@ -13694,7 +13694,7 @@ func (x *ObjectFieldSelector) codecDecodeSelfFromArray(l int, d *codec1978.Decod
 	z.DecSendContainerState(codecSelfer_containerArrayEnd1234)
 }
 
-func (x *ConfigMapKeySelector) CodecEncodeSelf(e *codec1978.Encoder) {
+func (x *MapKeySelector) CodecEncodeSelf(e *codec1978.Encoder) {
 	var h codecSelfer1234
 	z, r := codec1978.GenHelperEncoder(e)
 	_, _, _ = h, z, r
@@ -13778,7 +13778,7 @@ func (x *ConfigMapKeySelector) CodecEncodeSelf(e *codec1978.Encoder) {
 	}
 }
 
-func (x *ConfigMapKeySelector) CodecDecodeSelf(d *codec1978.Decoder) {
+func (x *MapKeySelector) CodecDecodeSelf(d *codec1978.Decoder) {
 	var h codecSelfer1234
 	z, r := codec1978.GenHelperDecoder(d)
 	_, _, _ = h, z, r
@@ -13808,7 +13808,7 @@ func (x *ConfigMapKeySelector) CodecDecodeSelf(d *codec1978.Decoder) {
 	}
 }
 
-func (x *ConfigMapKeySelector) codecDecodeSelfFromMap(l int, d *codec1978.Decoder) {
+func (x *MapKeySelector) codecDecodeSelfFromMap(l int, d *codec1978.Decoder) {
 	var h codecSelfer1234
 	z, r := codec1978.GenHelperDecoder(d)
 	_, _, _ = h, z, r
@@ -13849,7 +13849,7 @@ func (x *ConfigMapKeySelector) codecDecodeSelfFromMap(l int, d *codec1978.Decode
 	z.DecSendContainerState(codecSelfer_containerMapEnd1234)
 }
 
-func (x *ConfigMapKeySelector) codecDecodeSelfFromArray(l int, d *codec1978.Decoder) {
+func (x *MapKeySelector) codecDecodeSelfFromArray(l int, d *codec1978.Decoder) {
 	var h codecSelfer1234
 	z, r := codec1978.GenHelperDecoder(d)
 	_, _, _ = h, z, r

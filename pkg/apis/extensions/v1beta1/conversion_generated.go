@@ -320,6 +320,24 @@ func autoConvert_api_EnvVarSource_To_v1_EnvVarSource(in *api.EnvVarSource, out *
 	} else {
 		out.FieldRef = nil
 	}
+	// unable to generate simple pointer conversion for api.MapKeySelector -> v1.MapKeySelector
+	if in.ConfigMapKeyRef != nil {
+		out.ConfigMapKeyRef = new(v1.MapKeySelector)
+		if err := Convert_api_MapKeySelector_To_v1_MapKeySelector(in.ConfigMapKeyRef, out.ConfigMapKeyRef, s); err != nil {
+			return err
+		}
+	} else {
+		out.ConfigMapKeyRef = nil
+	}
+	// unable to generate simple pointer conversion for api.MapKeySelector -> v1.MapKeySelector
+	if in.SecretKeyRef != nil {
+		out.SecretKeyRef = new(v1.MapKeySelector)
+		if err := Convert_api_MapKeySelector_To_v1_MapKeySelector(in.SecretKeyRef, out.SecretKeyRef, s); err != nil {
+			return err
+		}
+	} else {
+		out.SecretKeyRef = nil
+	}
 	return nil
 }
 
@@ -644,6 +662,21 @@ func autoConvert_api_LocalObjectReference_To_v1_LocalObjectReference(in *api.Loc
 
 func Convert_api_LocalObjectReference_To_v1_LocalObjectReference(in *api.LocalObjectReference, out *v1.LocalObjectReference, s conversion.Scope) error {
 	return autoConvert_api_LocalObjectReference_To_v1_LocalObjectReference(in, out, s)
+}
+
+func autoConvert_api_MapKeySelector_To_v1_MapKeySelector(in *api.MapKeySelector, out *v1.MapKeySelector, s conversion.Scope) error {
+	if defaulting, found := s.DefaultingInterface(reflect.TypeOf(*in)); found {
+		defaulting.(func(*api.MapKeySelector))(in)
+	}
+	if err := Convert_api_LocalObjectReference_To_v1_LocalObjectReference(&in.LocalObjectReference, &out.LocalObjectReference, s); err != nil {
+		return err
+	}
+	out.Key = in.Key
+	return nil
+}
+
+func Convert_api_MapKeySelector_To_v1_MapKeySelector(in *api.MapKeySelector, out *v1.MapKeySelector, s conversion.Scope) error {
+	return autoConvert_api_MapKeySelector_To_v1_MapKeySelector(in, out, s)
 }
 
 func autoConvert_api_NFSVolumeSource_To_v1_NFSVolumeSource(in *api.NFSVolumeSource, out *v1.NFSVolumeSource, s conversion.Scope) error {
@@ -1484,6 +1517,24 @@ func autoConvert_v1_EnvVarSource_To_api_EnvVarSource(in *v1.EnvVarSource, out *a
 	} else {
 		out.FieldRef = nil
 	}
+	// unable to generate simple pointer conversion for v1.MapKeySelector -> api.MapKeySelector
+	if in.ConfigMapKeyRef != nil {
+		out.ConfigMapKeyRef = new(api.MapKeySelector)
+		if err := Convert_v1_MapKeySelector_To_api_MapKeySelector(in.ConfigMapKeyRef, out.ConfigMapKeyRef, s); err != nil {
+			return err
+		}
+	} else {
+		out.ConfigMapKeyRef = nil
+	}
+	// unable to generate simple pointer conversion for v1.MapKeySelector -> api.MapKeySelector
+	if in.SecretKeyRef != nil {
+		out.SecretKeyRef = new(api.MapKeySelector)
+		if err := Convert_v1_MapKeySelector_To_api_MapKeySelector(in.SecretKeyRef, out.SecretKeyRef, s); err != nil {
+			return err
+		}
+	} else {
+		out.SecretKeyRef = nil
+	}
 	return nil
 }
 
@@ -1780,6 +1831,21 @@ func autoConvert_v1_LocalObjectReference_To_api_LocalObjectReference(in *v1.Loca
 
 func Convert_v1_LocalObjectReference_To_api_LocalObjectReference(in *v1.LocalObjectReference, out *api.LocalObjectReference, s conversion.Scope) error {
 	return autoConvert_v1_LocalObjectReference_To_api_LocalObjectReference(in, out, s)
+}
+
+func autoConvert_v1_MapKeySelector_To_api_MapKeySelector(in *v1.MapKeySelector, out *api.MapKeySelector, s conversion.Scope) error {
+	if defaulting, found := s.DefaultingInterface(reflect.TypeOf(*in)); found {
+		defaulting.(func(*v1.MapKeySelector))(in)
+	}
+	if err := Convert_v1_LocalObjectReference_To_api_LocalObjectReference(&in.LocalObjectReference, &out.LocalObjectReference, s); err != nil {
+		return err
+	}
+	out.Key = in.Key
+	return nil
+}
+
+func Convert_v1_MapKeySelector_To_api_MapKeySelector(in *v1.MapKeySelector, out *api.MapKeySelector, s conversion.Scope) error {
+	return autoConvert_v1_MapKeySelector_To_api_MapKeySelector(in, out, s)
 }
 
 func autoConvert_v1_NFSVolumeSource_To_api_NFSVolumeSource(in *v1.NFSVolumeSource, out *api.NFSVolumeSource, s conversion.Scope) error {
@@ -4717,6 +4783,7 @@ func init() {
 		autoConvert_api_LoadBalancerIngress_To_v1_LoadBalancerIngress,
 		autoConvert_api_LoadBalancerStatus_To_v1_LoadBalancerStatus,
 		autoConvert_api_LocalObjectReference_To_v1_LocalObjectReference,
+		autoConvert_api_MapKeySelector_To_v1_MapKeySelector,
 		autoConvert_api_NFSVolumeSource_To_v1_NFSVolumeSource,
 		autoConvert_api_ObjectFieldSelector_To_v1_ObjectFieldSelector,
 		autoConvert_api_ObjectMeta_To_v1_ObjectMeta,
@@ -4812,6 +4879,7 @@ func init() {
 		autoConvert_v1_LoadBalancerIngress_To_api_LoadBalancerIngress,
 		autoConvert_v1_LoadBalancerStatus_To_api_LoadBalancerStatus,
 		autoConvert_v1_LocalObjectReference_To_api_LocalObjectReference,
+		autoConvert_v1_MapKeySelector_To_api_MapKeySelector,
 		autoConvert_v1_NFSVolumeSource_To_api_NFSVolumeSource,
 		autoConvert_v1_ObjectFieldSelector_To_api_ObjectFieldSelector,
 		autoConvert_v1_ObjectMeta_To_api_ObjectMeta,
