@@ -41,7 +41,6 @@ func init() {
 		DeepCopy_api_ComponentStatus,
 		DeepCopy_api_ComponentStatusList,
 		DeepCopy_api_ConfigMap,
-		DeepCopy_api_ConfigMapKeySelector,
 		DeepCopy_api_ConfigMapList,
 		DeepCopy_api_Container,
 		DeepCopy_api_ContainerImage,
@@ -149,7 +148,6 @@ func init() {
 		DeepCopy_api_ResourceRequirements,
 		DeepCopy_api_SELinuxOptions,
 		DeepCopy_api_Secret,
-		DeepCopy_api_SecretKeySelector,
 		DeepCopy_api_SecretList,
 		DeepCopy_api_SecretVolumeSource,
 		DeepCopy_api_SecurityContext,
@@ -334,14 +332,6 @@ func DeepCopy_api_ConfigMap(in ConfigMap, out *ConfigMap, c *conversion.Cloner) 
 	} else {
 		out.Data = nil
 	}
-	return nil
-}
-
-func DeepCopy_api_ConfigMapKeySelector(in ConfigMapKeySelector, out *ConfigMapKeySelector, c *conversion.Cloner) error {
-	if err := DeepCopy_api_LocalObjectReference(in.LocalObjectReference, &out.LocalObjectReference, c); err != nil {
-		return err
-	}
-	out.Key = in.Key
 	return nil
 }
 
@@ -752,24 +742,6 @@ func DeepCopy_api_EnvVarSource(in EnvVarSource, out *EnvVarSource, c *conversion
 		}
 	} else {
 		out.FieldRef = nil
-	}
-	if in.ConfigMapKeyRef != nil {
-		in, out := in.ConfigMapKeyRef, &out.ConfigMapKeyRef
-		*out = new(ConfigMapKeySelector)
-		if err := DeepCopy_api_ConfigMapKeySelector(*in, *out, c); err != nil {
-			return err
-		}
-	} else {
-		out.ConfigMapKeyRef = nil
-	}
-	if in.SecretKeyRef != nil {
-		in, out := in.SecretKeyRef, &out.SecretKeyRef
-		*out = new(SecretKeySelector)
-		if err := DeepCopy_api_SecretKeySelector(*in, *out, c); err != nil {
-			return err
-		}
-	} else {
-		out.SecretKeyRef = nil
 	}
 	return nil
 }
@@ -2485,14 +2457,6 @@ func DeepCopy_api_Secret(in Secret, out *Secret, c *conversion.Cloner) error {
 		out.Data = nil
 	}
 	out.Type = in.Type
-	return nil
-}
-
-func DeepCopy_api_SecretKeySelector(in SecretKeySelector, out *SecretKeySelector, c *conversion.Cloner) error {
-	if err := DeepCopy_api_LocalObjectReference(in.LocalObjectReference, &out.LocalObjectReference, c); err != nil {
-		return err
-	}
-	out.Key = in.Key
 	return nil
 }
 

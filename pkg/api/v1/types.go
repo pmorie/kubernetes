@@ -847,10 +847,10 @@ type EnvVar struct {
 type EnvVarSource struct {
 	// Selects a field of the pod; only name and namespace are supported.
 	FieldRef *ObjectFieldSelector `json:"fieldRef,omitempty"`
-	// Selects a key of a ConfigMap.
-	ConfigMapKeyRef *ConfigMapKeySelector `json:"configMapKeyRef,omitempty"`
-	// Selects a key of a secret in the pod's namespace
-	SecretKeyRef *SecretKeySelector `json:"secretKeyRef,omitempty"`
+	// Selects a key of a ConfigMap in the pod's namespace.
+	ConfigMapKeyRef *MapKeySelector `json:"configMapKeyRef,omitempty"`
+	// Selects a key of a Secret in the pod's namespace.
+	SecretKeyRef *MapKeySelector `json:"secretKeyRef,omitempty"`
 }
 
 // ObjectFieldSelector selects an APIVersioned field of an object.
@@ -861,8 +861,8 @@ type ObjectFieldSelector struct {
 	FieldPath string `json:"fieldPath"`
 }
 
-// Selects a key from a ConfigMap.
-type ConfigMapKeySelector struct {
+// Selects a key from a map.
+type MapKeySelector struct {
 	// The ConfigMap to select from.
 	LocalObjectReference `json:",inline"`
 	// The key to select.

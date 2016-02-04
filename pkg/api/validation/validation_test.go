@@ -815,7 +815,7 @@ func TestValidateEnv(t *testing.T) {
 		{
 			Name: "secret_value",
 			ValueFrom: &api.EnvVarSource{
-				SecretKeyRef: &api.SecretKeySelector{
+				SecretKeyRef: &api.MapKeySelector{
 					LocalObjectReference: api.LocalObjectReference{
 						Name: "some-secret",
 					},
@@ -826,7 +826,7 @@ func TestValidateEnv(t *testing.T) {
 		{
 			Name: "ENV_VAR_1",
 			ValueFrom: &api.EnvVarSource{
-				ConfigMapKeyRef: &api.ConfigMapKeySelector{
+				ConfigMapKeyRef: &api.MapKeySelector{
 					LocalObjectReference: api.LocalObjectReference{
 						Name: "some-config-map",
 					},
@@ -877,7 +877,7 @@ func TestValidateEnv(t *testing.T) {
 						APIVersion: testapi.Default.GroupVersion().String(),
 						FieldPath:  "metadata.name",
 					},
-					SecretKeyRef: &api.SecretKeySelector{
+					SecretKeyRef: &api.MapKeySelector{
 						LocalObjectReference: api.LocalObjectReference{
 							Name: "a-secret",
 						},
@@ -896,7 +896,7 @@ func TestValidateEnv(t *testing.T) {
 						APIVersion: testapi.Default.GroupVersion().String(),
 						FieldPath:  "metadata.name",
 					},
-					ConfigMapKeyRef: &api.ConfigMapKeySelector{
+					ConfigMapKeyRef: &api.MapKeySelector{
 						LocalObjectReference: api.LocalObjectReference{
 							Name: "some-config-map",
 						},
@@ -915,13 +915,13 @@ func TestValidateEnv(t *testing.T) {
 						APIVersion: testapi.Default.GroupVersion().String(),
 						FieldPath:  "metadata.name",
 					},
-					SecretKeyRef: &api.SecretKeySelector{
+					SecretKeyRef: &api.MapKeySelector{
 						LocalObjectReference: api.LocalObjectReference{
 							Name: "a-secret",
 						},
 						Key: "a-key",
 					},
-					ConfigMapKeyRef: &api.ConfigMapKeySelector{
+					ConfigMapKeyRef: &api.MapKeySelector{
 						LocalObjectReference: api.LocalObjectReference{
 							Name: "some-config-map",
 						},

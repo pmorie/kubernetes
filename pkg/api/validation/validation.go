@@ -974,11 +974,11 @@ func validateEnvVarValueFrom(ev api.EnvVar, fldPath *field.Path) field.ErrorList
 	}
 	if ev.ValueFrom.ConfigMapKeyRef != nil {
 		numSources++
-		allErrs = append(allErrs, validateConfigMapKeySelector(ev.ValueFrom.ConfigMapKeyRef, fldPath.Child("configMapKeyRef"))...)
+		allErrs = append(allErrs, validateMapKeySelector(ev.ValueFrom.ConfigMapKeyRef, fldPath.Child("configMapKeyRef"))...)
 	}
 	if ev.ValueFrom.SecretKeyRef != nil {
 		numSources++
-		allErrs = append(allErrs, validateSecretKeySelector(ev.ValueFrom.SecretKeyRef, fldPath.Child("secretKeyRef"))...)
+		allErrs = append(allErrs, validateMapKeySelector(ev.ValueFrom.SecretKeyRef, fldPath.Child("secretKeyRef"))...)
 	}
 
 	if len(ev.Value) != 0 {
@@ -1011,22 +1011,7 @@ func validateObjectFieldSelector(fs *api.ObjectFieldSelector, expressions *sets.
 	return allErrs
 }
 
-func validateConfigMapKeySelector(s *api.ConfigMapKeySelector, fldPath *field.Path) field.ErrorList {
-	allErrs := field.ErrorList{}
-
-	if len(s.Name) == 0 {
-		allErrs = append(allErrs, field.Required(fldPath.Child("name"), ""))
-	}
-	if len(s.Key) == 0 {
-		allErrs = append(allErrs, field.Required(fldPath.Child("key"), ""))
-	} else if !IsSecretKey(s.Key) {
-		allErrs = append(allErrs, field.Invalid(fldPath.Child("key"), s.Key, fmt.Sprintf("must have at most %d characters and match regex %s", validation.DNS1123SubdomainMaxLength, SecretKeyFmt)))
-	}
-
-	return allErrs
-}
-
-func validateSecretKeySelector(s *api.SecretKeySelector, fldPath *field.Path) field.ErrorList {
+func validateMapKeySelector(s *api.MapKeySelector, fldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 
 	if len(s.Name) == 0 {
