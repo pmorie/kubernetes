@@ -849,6 +849,30 @@ func waitTimeoutForPodRunningInNamespace(c *client.Client, podName string, names
 	})
 }
 
+func waitForPodReadyInNamespace(c *client.Client, podName, namespace string) error {
+	return waitTimeoutForPodReadyInNamespace(c, podName, namespace, podStartTimeout)
+}
+
+func waitTimeoutForPodReadyInNamespace(c *client.Client, podName, namespace string, timeout time.Duration) error {
+	return waitForPodCondition(c, namespace, podName, "ready", timeout, func(pod *api.Pod) (bool, error) {
+		if pod.Status.Phase == api.PodFailed {
+			return true, fmt.Errorf("Giving up; pod went into failed status: \n%s", spew.Sprintf("%#v", pod))
+		}
+
+		if pod.Status.Phase != api.PodRunning {
+			return false, nil
+		}
+
+		for _, condition := range pod.Status.Conditions {
+			if condition.Type == api.PodReady && condition.Status == api.ConditionTrue {
+				return true, nil
+			}
+		}
+
+		return false, nil
+	})
+}
+
 // Waits default amount of time (podNoLongerRunningTimeout) for the specified pod to stop running.
 // Returns an error if timeout occurs first.
 func waitForPodNoLongerRunningInNamespace(c *client.Client, podName string, namespace string) error {

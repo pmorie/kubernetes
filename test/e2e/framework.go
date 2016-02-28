@@ -20,6 +20,7 @@ import (
 	"bytes"
 	"fmt"
 	"reflect"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -272,6 +273,10 @@ func (f *Framework) WaitForPodRunning(podName string) error {
 	return waitForPodRunningInNamespace(f.Client, podName, f.Namespace.Name)
 }
 
+func (f *Framework) WaitForPodReady(podName string) error {
+	return waitForPodReadyInNamespace(f.Client, podName, f.Namespace.Name)
+}
+
 // WaitForPodRunningSlow waits for the pod to run in the namespace.
 // It has a longer timeout then WaitForPodRunning (util.slowPodStartTimeout).
 func (f *Framework) WaitForPodRunningSlow(podName string) error {
@@ -367,6 +372,74 @@ func (f *Framework) ReadFileViaContainer(podName, containerName string, path str
 		Logf("error running kubectl exec to read file: %v\nstdout=%v\nstderr=%v)", err, string(stdout), string(stderr))
 	}
 	return string(stdout), err
+}
+
+func (f *Framework) RunShellCommandInNetexecContainer(podName, command string, useProxySubresource bool) string {
+	return runShellCommandInNetexecContainer(f.Client, f.Namespace.Name, podName, command, useProxySubresource)
+}
+
+func (f *Framework) ExitNetexecContainer(podName string, code int, useProxySubresource bool) {
+	exitNetexecContainer(f.Client, f.Namespace.Name, podName, code, useProxySubresource)
+}
+
+func exitNetexecContainer(c *client.Client, ns, podName string, code int, useProxySubresource bool) {
+	Logf("Exiting netexec container")
+	var err error
+	exitCode := strconv.Itoa(code)
+	if useProxySubresource {
+		_, err = c.Post().
+			Namespace(ns).
+			Name(podName).
+			Resource("pods").
+			SubResource("proxy").
+			Suffix("exit").
+			Param("code", exitCode).
+			Do().Raw()
+	} else {
+		_, err = c.Post().
+			Prefix("proxy").
+			Namespace(ns).
+			Name(podName).
+			Resource("pods").
+			Suffix("exit").
+			Param("code", exitCode).
+			Do().Raw()
+	}
+	// TODO: determine whether /exit doesn't play nice w/ proxy endpoint
+	if err != nil {
+		Logf("unexpected error killing netexec container: %v", err)
+	}
+}
+
+func runShellCommandInNetexecContainer(c *client.Client, ns, podName, command string, useProxySubresource bool) string {
+	Logf("exec'ing shell command in netexec container: %v", command)
+	Logf("use proxy subresource: %v", useProxySubresource)
+	var err error
+	var netexecShellOutput []byte
+	if useProxySubresource {
+		netexecShellOutput, err = c.Post().
+			Namespace(ns).
+			Name(podName).
+			Resource("pods").
+			SubResource("proxy").
+			Suffix("shell").
+			Param("shellCommand", command).
+			Do().Raw()
+	} else {
+		netexecShellOutput, err = c.Post().
+			Prefix("proxy").
+			Namespace(ns).
+			Name(podName).
+			Resource("pods").
+			Suffix("shell").
+			Param("shellCommand", command).
+			Do().Raw()
+	}
+	if err != nil {
+		Failf("unexpected error running shell command: %v", err)
+	}
+
+	return string(netexecShellOutput)
 }
 
 func kubectlExecWithRetry(namespace string, podName, containerName string, args ...string) ([]byte, []byte, error) {
