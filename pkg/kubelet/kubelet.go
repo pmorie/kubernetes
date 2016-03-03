@@ -1210,14 +1210,19 @@ func (kl *Kubelet) relabelVolumes(pod *api.Pod, volumes kubecontainer.VolumeMap)
 	return nil
 }
 
-func makeMounts(pod *api.Pod, podDir string, container *api.Container, podVolumes kubecontainer.VolumeMap) ([]kubecontainer.Mount, error) {
+func (kl *Kubelet) makeMounts(pod *api.Pod, podDir string, container *api.Container, podVolumes kubecontainer.VolumeMap) ([]kubecontainer.Mount, error) {
 	// Kubernetes only mounts on /etc/hosts if :
 	// - container does not use hostNetwork and
 	// - container is not a infrastructure(pause) container
 	// - container is not already mounting on /etc/hosts
 	// When the pause container is being created, its IP is still unknown. Hence, PodIP will not have been set.
-	mountEtcHostsFile := (pod.Spec.SecurityContext == nil || !pod.Spec.SecurityContext.HostNetwork) && len(pod.Status.PodIP) > 0
-	glog.V(3).Infof("container: %v/%v/%v podIP: %q creating hosts mount: %v", pod.Namespace, pod.Name, container.Name, pod.Status.PodIP, mountEtcHostsFile)
+	podIP, err := kl.getPodIP(pod)
+	if err != nil {
+		return nil, err
+	}
+
+	mountEtcHostsFile := (pod.Spec.SecurityContext == nil || !pod.Spec.SecurityContext.HostNetwork) && len(podIP) > 0
+	glog.V(3).Infof("container: %v/%v/%v podIP: %q creating hosts mount: %v", pod.Namespace, pod.Name, container.Name, podIP, mountEtcHostsFile)
 	mounts := []kubecontainer.Mount{}
 	for _, mount := range container.VolumeMounts {
 		mountEtcHostsFile = mountEtcHostsFile && (mount.MountPath != etcHostsPath)
@@ -1244,7 +1249,7 @@ func makeMounts(pod *api.Pod, podDir string, container *api.Container, podVolume
 		})
 	}
 	if mountEtcHostsFile {
-		hostsMount, err := makeHostsMount(podDir, pod.Status.PodIP, pod.Name)
+		hostsMount, err := makeHostsMount(podDir, podIP, pod.Name)
 		if err != nil {
 			return nil, err
 		}
@@ -1335,7 +1340,7 @@ func (kl *Kubelet) GenerateRunContainerOptions(pod *api.Pod, container *api.Cont
 		}
 	}
 
-	opts.Mounts, err = makeMounts(pod, kl.getPodDir(pod.UID), container, vol)
+	opts.Mounts, err = kl.makeMounts(pod, kl.getPodDir(pod.UID), container, vol)
 	if err != nil {
 		return nil, err
 	}
@@ -1517,9 +1522,32 @@ func (kl *Kubelet) podFieldSelectorRuntimeValue(fs *api.ObjectFieldSelector, pod
 	}
 	switch internalFieldPath {
 	case "status.podIP":
-		return pod.Status.PodIP, nil
+		return kl.getPodIP(pod)
 	}
 	return fieldpath.ExtractFieldPathAsString(pod, internalFieldPath)
+}
+
+func (kl *Kubelet) getPodIP(pod *api.Pod) (string, error) {
+	if len(pod.Status.PodIP) != 0 {
+		return pod.Status.PodIP, nil
+	}
+
+	status, ok := kl.statusManager.GetPodStatus(pod.UID)
+	if ok && len(status.PodIP) != 0 {
+		return status.PodIP, nil
+	}
+
+	runtimeStatus, err := kl.containerRuntime.GetPodStatus(pod.UID, pod.Name, pod.Namespace)
+	if err != nil {
+		glog.Errorf("Error getting pod status from container runtime to inject env var for pod %v/%v: %v", pod.Namespace, pod.Name, err)
+		return "", err
+	}
+
+	if len(runtimeStatus.IP) == 0 {
+		glog.Warningf("Couldn't determine IP of pod %v/%v", pod.Namespace, pod.Name)
+	}
+
+	return runtimeStatus.IP, nil
 }
 
 // GetClusterDNS returns a list of the DNS servers and a list of the DNS search
