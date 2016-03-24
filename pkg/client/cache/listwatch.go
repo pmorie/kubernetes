@@ -24,6 +24,8 @@ import (
 	"k8s.io/kubernetes/pkg/fields"
 	"k8s.io/kubernetes/pkg/runtime"
 	"k8s.io/kubernetes/pkg/watch"
+
+	"github.com/golang/glog"
 )
 
 // ListFunc knows how to list resources
@@ -38,6 +40,7 @@ type WatchFunc func(options api.ListOptions) (watch.Interface, error)
 type ListWatch struct {
 	ListFunc  ListFunc
 	WatchFunc WatchFunc
+	Name      string
 }
 
 // Getter interface knows how to access Get method from RESTClient.
@@ -68,6 +71,12 @@ func NewListWatchFromClient(c Getter, resource string, namespace string, fieldSe
 	return &ListWatch{ListFunc: listFunc, WatchFunc: watchFunc}
 }
 
+func NewListWatchFromClientNamed(name string, c Getter, resource, namespace string, fieldSelector fields.Selector) *ListWatch {
+	lw := NewListWatchFromClient(c, resource, namespace, fieldSelector)
+	lw.Name = name
+	return lw
+}
+
 func timeoutFromListOptions(options api.ListOptions) time.Duration {
 	if options.TimeoutSeconds != nil {
 		return time.Duration(*options.TimeoutSeconds) * time.Second
@@ -77,10 +86,18 @@ func timeoutFromListOptions(options api.ListOptions) time.Duration {
 
 // List a set of apiserver resources
 func (lw *ListWatch) List(options api.ListOptions) (runtime.Object, error) {
+	if len(lw.Name) != 0 {
+		glog.Infof("ListWatch %v List(%+v)", lw.Name, options)
+	}
+
 	return lw.ListFunc(options)
 }
 
 // Watch a set of apiserver resources
 func (lw *ListWatch) Watch(options api.ListOptions) (watch.Interface, error) {
+	if len(lw.Name) != 0 {
+		glog.Infof("ListWatch %v Watch(%+v)", lw.Name, options)
+	}
+
 	return lw.WatchFunc(options)
 }
