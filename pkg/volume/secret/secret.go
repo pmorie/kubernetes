@@ -147,12 +147,6 @@ func (b *secretVolumeMounter) SetUpAt(dir string, fsGroup *int64) error {
 		return err
 	}
 
-	// If the plugin readiness file is present for this volume and
-	// the setup dir is a mountpoint, this volume is already ready.
-	if volumeutil.IsReady(b.getMetaDir()) && !notMnt {
-		return nil
-	}
-
 	glog.V(3).Infof("Setting up volume %v for pod %v at %v", b.volName, b.pod.UID, dir)
 
 	// Wrap EmptyDir, let it do the setup.
@@ -164,15 +158,39 @@ func (b *secretVolumeMounter) SetUpAt(dir string, fsGroup *int64) error {
 		return err
 	}
 
+	payload, err := b.makePayload()
+	if err != nil {
+		return
+	}
+
+	writerContext := fmt.Sprintf("pod %v/%v volume %v", b.pod.Namespace, b.pod.Name, b.volName)
+	writer, err := volumeutil.NewAtomicWriter(dir, writerContext)
+	if err != nil {
+		glog.Errorf("Error creating atomic writer: %v", err)
+		return err
+	}
+
+	err = writer.Write(payload)
+	if err != nil {
+		glog.Errorf("Error writing payload to dir: %v", err)
+		return err
+	}
+
+	volume.SetVolumeOwnership(b, fsGroup)
+
+	return nil
+}
+
+func (b *secretVolumeMounter) makePayload() (map[string][]byte, error) {
 	kubeClient := b.plugin.host.GetKubeClient()
 	if kubeClient == nil {
-		return fmt.Errorf("Cannot setup secret volume %v because kube client is not configured", b.volName)
+		return nil, fmt.Errorf("Cannot setup secret volume %v because kube client is not configured", b.volName)
 	}
 
 	secret, err := kubeClient.Core().Secrets(b.pod.Namespace).Get(b.secretName)
 	if err != nil {
 		glog.Errorf("Couldn't get secret %v/%v", b.pod.Namespace, b.secretName)
-		return err
+		return nil, err
 	} else {
 		totalBytes := totalSecretBytes(secret)
 		glog.V(3).Infof("Received secret %v/%v containing (%v) pieces of data, %v total bytes",
@@ -182,21 +200,12 @@ func (b *secretVolumeMounter) SetUpAt(dir string, fsGroup *int64) error {
 			totalBytes)
 	}
 
-	for name, data := range secret.Data {
-		hostFilePath := path.Join(dir, name)
-		glog.V(3).Infof("Writing secret data %v/%v/%v (%v bytes) to host file %v", b.pod.Namespace, b.secretName, name, len(data), hostFilePath)
-		err := b.writer.WriteFile(hostFilePath, data, 0444)
-		if err != nil {
-			glog.Errorf("Error writing secret data to host path: %v, %v", hostFilePath, err)
-			return err
-		}
+	result := make(map[string][]byte)
+	for k, v := range secret.Data {
+		result[k] = []byte(v)
 	}
 
-	volume.SetVolumeOwnership(b, fsGroup)
-
-	volumeutil.SetReady(b.getMetaDir())
-
-	return nil
+	return result, nil
 }
 
 func totalSecretBytes(secret *api.Secret) int {

@@ -62,7 +62,7 @@ func logPanic(r interface{}) {
 // error occurs.
 var ErrorHandlers = []func(error){logError}
 
-// HandlerError is a method to invoke when a non-user facing piece of code cannot
+// HandleError is a method to invoke when a non-user facing piece of code cannot
 // return an error and needs to indicate it has been ignored. Invoking this method
 // is preferable to logging the error - the default behavior is to log but the
 // errors may be sent to a remote server for analysis.
