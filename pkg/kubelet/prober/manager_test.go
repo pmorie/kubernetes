@@ -29,6 +29,7 @@ import (
 	"k8s.io/kubernetes/pkg/probe"
 	"k8s.io/kubernetes/pkg/types"
 	"k8s.io/kubernetes/pkg/util/runtime"
+	testutil "k8s.io/kubernetes/pkg/util/testing"
 	"k8s.io/kubernetes/pkg/util/wait"
 )
 
@@ -47,38 +48,26 @@ var defaultProbe *api.Probe = &api.Probe{
 }
 
 func TestAddRemovePods(t *testing.T) {
-	noProbePod := api.Pod{
-		ObjectMeta: api.ObjectMeta{
-			UID: "no_probe_pod",
-		},
-		Spec: api.PodSpec{
-			Containers: []api.Container{{
-				Name: "no_probe1",
-			}, {
-				Name: "no_probe2",
-			}},
-		},
-	}
-
-	probePod := api.Pod{
-		ObjectMeta: api.ObjectMeta{
-			UID: "probe_pod",
-		},
-		Spec: api.PodSpec{
-			Containers: []api.Container{{
-				Name: "no_probe1",
-			}, {
-				Name:           "readiness",
-				ReadinessProbe: defaultProbe,
-			}, {
-				Name: "no_probe2",
-			}, {
-				Name:          "liveness",
-				LivenessProbe: defaultProbe,
-			}},
-		},
-	}
-
+	noProbePod := testutil.PodWithUidNameNsSpec("no_probe_pod", "", "", api.PodSpec{
+		Containers: []api.Container{{
+			Name: "no_probe1",
+		}, {
+			Name: "no_probe2",
+		}},
+	})
+	probePod := testutil.PodWithUidNameNsSpec("probe_pod", "", "", api.PodSpec{
+		Containers: []api.Container{{
+			Name: "no_probe1",
+		}, {
+			Name:           "readiness",
+			ReadinessProbe: defaultProbe,
+		}, {
+			Name: "no_probe2",
+		}, {
+			Name:          "liveness",
+			LivenessProbe: defaultProbe,
+		}},
+	})
 	m := newTestManager()
 	defer cleanup(t, m)
 	if err := expectProbes(m, nil); err != nil {
@@ -86,13 +75,13 @@ func TestAddRemovePods(t *testing.T) {
 	}
 
 	// Adding a pod with no probes should be a no-op.
-	m.AddPod(&noProbePod)
+	m.AddPod(noProbePod)
 	if err := expectProbes(m, nil); err != nil {
 		t.Error(err)
 	}
 
 	// Adding a pod with probes.
-	m.AddPod(&probePod)
+	m.AddPod(probePod)
 	probePaths := []probeKey{
 		{"probe_pod", "readiness", readiness},
 		{"probe_pod", "liveness", liveness},
@@ -102,13 +91,13 @@ func TestAddRemovePods(t *testing.T) {
 	}
 
 	// Removing un-probed pod.
-	m.RemovePod(&noProbePod)
+	m.RemovePod(noProbePod)
 	if err := expectProbes(m, probePaths); err != nil {
 		t.Error(err)
 	}
 
 	// Removing probed pod.
-	m.RemovePod(&probePod)
+	m.RemovePod(probePod)
 	if err := waitForWorkerExit(m, probePaths); err != nil {
 		t.Fatal(err)
 	}
@@ -117,7 +106,7 @@ func TestAddRemovePods(t *testing.T) {
 	}
 
 	// Removing already removed pods should be a no-op.
-	m.RemovePod(&probePod)
+	m.RemovePod(probePod)
 	if err := expectProbes(m, nil); err != nil {
 		t.Error(err)
 	}
@@ -126,38 +115,28 @@ func TestAddRemovePods(t *testing.T) {
 func TestCleanupPods(t *testing.T) {
 	m := newTestManager()
 	defer cleanup(t, m)
-	podToCleanup := api.Pod{
-		ObjectMeta: api.ObjectMeta{
-			UID: "pod_cleanup",
-		},
-		Spec: api.PodSpec{
-			Containers: []api.Container{{
-				Name:           "prober1",
-				ReadinessProbe: defaultProbe,
-			}, {
-				Name:          "prober2",
-				LivenessProbe: defaultProbe,
-			}},
-		},
-	}
-	podToKeep := api.Pod{
-		ObjectMeta: api.ObjectMeta{
-			UID: "pod_keep",
-		},
-		Spec: api.PodSpec{
-			Containers: []api.Container{{
-				Name:           "prober1",
-				ReadinessProbe: defaultProbe,
-			}, {
-				Name:          "prober2",
-				LivenessProbe: defaultProbe,
-			}},
-		},
-	}
-	m.AddPod(&podToCleanup)
-	m.AddPod(&podToKeep)
+	podToCleanup := testutil.PodWithUidNameNsSpec("pod_cleanup", "", "", api.PodSpec{
+		Containers: []api.Container{{
+			Name:           "prober1",
+			ReadinessProbe: defaultProbe,
+		}, {
+			Name:          "prober2",
+			LivenessProbe: defaultProbe,
+		}},
+	})
+	podToKeep := testutil.PodWithUidNameNsSpec("pod_keep", "", "", api.PodSpec{
+		Containers: []api.Container{{
+			Name:           "prober1",
+			ReadinessProbe: defaultProbe,
+		}, {
+			Name:          "prober2",
+			LivenessProbe: defaultProbe,
+		}},
+	})
+	m.AddPod(podToCleanup)
+	m.AddPod(podToKeep)
 
-	m.CleanupPods([]*api.Pod{&podToKeep})
+	m.CleanupPods([]*api.Pod{podToKeep})
 
 	removedProbes := []probeKey{
 		{"pod_cleanup", "prober1", readiness},

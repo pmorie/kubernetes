@@ -25,6 +25,7 @@ import (
 	"k8s.io/kubernetes/pkg/api"
 	kubecontainer "k8s.io/kubernetes/pkg/kubelet/container"
 	"k8s.io/kubernetes/pkg/util/intstr"
+	testutil "k8s.io/kubernetes/pkg/util/testing"
 )
 
 func TestResolvePortInt(t *testing.T) {
@@ -109,11 +110,9 @@ func TestRunHandlerExec(t *testing.T) {
 		},
 	}
 
-	pod := api.Pod{}
-	pod.ObjectMeta.Name = "podFoo"
-	pod.ObjectMeta.Namespace = "nsFoo"
+	pod := testutil.PodWithUidNameNs("", "podFoo", "nsFoo")
 	pod.Spec.Containers = []api.Container{container}
-	err := handlerRunner.Run(containerID, &pod, &container, container.Lifecycle.PostStart)
+	err := handlerRunner.Run(containerID, pod, &container, container.Lifecycle.PostStart)
 	if err != nil {
 		t.Errorf("unexpected error: %v", err)
 	}
@@ -152,11 +151,9 @@ func TestRunHandlerHttp(t *testing.T) {
 			},
 		},
 	}
-	pod := api.Pod{}
-	pod.ObjectMeta.Name = "podFoo"
-	pod.ObjectMeta.Namespace = "nsFoo"
+	pod := testutil.PodWithUidNameNs("", "podFoo", "nsFoo")
 	pod.Spec.Containers = []api.Container{container}
-	err := handlerRunner.Run(containerID, &pod, &container, container.Lifecycle.PostStart)
+	err := handlerRunner.Run(containerID, pod, &container, container.Lifecycle.PostStart)
 
 	if err != nil {
 		t.Errorf("unexpected error: %v", err)
@@ -169,8 +166,6 @@ func TestRunHandlerHttp(t *testing.T) {
 func TestRunHandlerNil(t *testing.T) {
 	handlerRunner := NewHandlerRunner(&fakeHTTP{}, &fakeContainerCommandRunner{}, nil)
 	containerID := kubecontainer.ContainerID{Type: "test", ID: "abc1234"}
-	podName := "podFoo"
-	podNamespace := "nsFoo"
 	containerName := "containerFoo"
 
 	container := api.Container{
@@ -179,11 +174,9 @@ func TestRunHandlerNil(t *testing.T) {
 			PostStart: &api.Handler{},
 		},
 	}
-	pod := api.Pod{}
-	pod.ObjectMeta.Name = podName
-	pod.ObjectMeta.Namespace = podNamespace
+	pod := testutil.PodWithUidNameNs("", "podFoo", "nsFoo")
 	pod.Spec.Containers = []api.Container{container}
-	err := handlerRunner.Run(containerID, &pod, &container, container.Lifecycle.PostStart)
+	err := handlerRunner.Run(containerID, pod, &container, container.Lifecycle.PostStart)
 	if err == nil {
 		t.Errorf("expect error, but got nil")
 	}

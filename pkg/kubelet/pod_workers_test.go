@@ -29,6 +29,7 @@ import (
 	kubetypes "k8s.io/kubernetes/pkg/kubelet/types"
 	"k8s.io/kubernetes/pkg/kubelet/util/queue"
 	"k8s.io/kubernetes/pkg/types"
+	testutil "k8s.io/kubernetes/pkg/util/testing"
 )
 
 // fakePodWorkers runs sync pod function in serial, so we can have
@@ -228,12 +229,12 @@ func TestFakePodWorkers(t *testing.T) {
 			&api.Pod{},
 		},
 		{
-			podWithUidNameNs("12345678", "foo", "new"),
-			podWithUidNameNs("12345678", "fooMirror", "new"),
+			testutil.PodWithUidNameNs("12345678", "foo", "new"),
+			testutil.PodWithUidNameNs("12345678", "fooMirror", "new"),
 		},
 		{
-			podWithUidNameNs("98765", "bar", "new"),
-			podWithUidNameNs("98765", "barMirror", "new"),
+			testutil.PodWithUidNameNs("98765", "bar", "new"),
+			testutil.PodWithUidNameNs("98765", "barMirror", "new"),
 		},
 	}
 
