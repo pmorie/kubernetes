@@ -21,7 +21,9 @@ import (
 	"sort"
 
 	"k8s.io/kubernetes/pkg/api"
+	"k8s.io/kubernetes/pkg/api/unversioned"
 	"k8s.io/kubernetes/pkg/client/cache"
+	"k8s.io/kubernetes/pkg/labels"
 )
 
 // persistentVolumeOrderedIndex is a cache.Store that keeps persistent volumes indexed by AccessModes and ordered by storage capacity.
@@ -79,6 +81,16 @@ func (pvIndex *persistentVolumeOrderedIndex) findByClaim(claim *api.PersistentVo
 	requestedQty := claim.Spec.Resources.Requests[api.ResourceName(api.ResourceStorage)]
 	requestedSize := requestedQty.Value()
 
+	var selector labels.Selector
+	if claim.Spec.Selector != nil {
+		internalSelector, err := unversioned.LabelSelectorAsSelector(claim.Spec.Selector)
+		if err != nil {
+			// should be unreachable code due to validation
+			return nil, fmt.Errorf("error creating internal label selector for claim: %v: %v", claimToClaimKey(claim), err)
+		}
+		selector = internalSelector
+	}
+
 	for _, modes := range allPossibleModes {
 		volumes, err := pvIndex.listByAccessModes(modes)
 		if err != nil {
@@ -93,15 +105,18 @@ func (pvIndex *persistentVolumeOrderedIndex) findByClaim(claim *api.PersistentVo
 		//   the claim.
 		for _, volume := range volumes {
 			if isVolumeBoundToClaim(volume, claim) {
-				// Exact match! No search required. This catches both volumes
-				// pre-bound by user and volumes dynamically provisioned by the
-				// controller.
+				// this claim and volume are bound; return it,
+				// whether the claim is prebound or for volumes
+				// intended for dynamic provisioning v1
 				return volume, nil
 			}
 
-			if volume.Spec.ClaimRef != nil {
-				// This volume waits for exact claim or is alredy bound.
-				continue
+			// filter out volumes whose labels don't match the claim's
+			// selector, if specified
+			if volume.Spec.ClaimRef == nil {
+				if selector != nil && !selector.Matches(labels.Set(volume.Labels)) {
+					continue
+				}
 			}
 
 			volumeQty := volume.Spec.Capacity[api.ResourceStorage]
