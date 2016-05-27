@@ -4028,6 +4028,16 @@ func autoConvert_v1_PersistentVolumeClaimSpec_To_api_PersistentVolumeClaimSpec(i
 	} else {
 		out.AccessModes = nil
 	}
+	if in.Selector != nil {
+		in, out := &in.Selector, &out.Selector
+		*out = new(unversioned.LabelSelector)
+		// TODO: Inefficient conversion - can we improve it?
+		if err := s.Convert(*in, *out, 0); err != nil {
+			return err
+		}
+	} else {
+		out.Selector = nil
+	}
 	if err := Convert_v1_ResourceRequirements_To_api_ResourceRequirements(&in.Resources, &out.Resources, s); err != nil {
 		return err
 	}
@@ -4048,6 +4058,16 @@ func autoConvert_api_PersistentVolumeClaimSpec_To_v1_PersistentVolumeClaimSpec(i
 		}
 	} else {
 		out.AccessModes = nil
+	}
+	if in.Selector != nil {
+		in, out := &in.Selector, &out.Selector
+		*out = new(unversioned.LabelSelector)
+		// TODO: Inefficient conversion - can we improve it?
+		if err := s.Convert(*in, *out, 0); err != nil {
+			return err
+		}
+	} else {
+		out.Selector = nil
 	}
 	if err := Convert_api_ResourceRequirements_To_v1_ResourceRequirements(&in.Resources, &out.Resources, s); err != nil {
 		return err
