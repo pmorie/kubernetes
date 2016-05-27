@@ -21,9 +21,9 @@ import (
 	"sort"
 
 	"k8s.io/kubernetes/pkg/api"
-	"k8s.io/kubernetes/pkg/api/unversioned"
+	// "k8s.io/kubernetes/pkg/api/unversioned"
 	"k8s.io/kubernetes/pkg/client/cache"
-	"k8s.io/kubernetes/pkg/labels"
+	// "k8s.io/kubernetes/pkg/labels"
 )
 
 // persistentVolumeOrderedIndex is a cache.Store that keeps persistent volumes indexed by AccessModes and ordered by storage capacity.
@@ -76,20 +76,23 @@ func (pvIndex *persistentVolumeOrderedIndex) findByClaim(claim *api.PersistentVo
 	// potential matches (the GCEPD example above).
 	allPossibleModes := pvIndex.allPossibleMatchingAccessModes(claim.Spec.AccessModes)
 
-	var smallestVolume *api.PersistentVolume
-	var smallestVolumeSize int64
-	requestedQty := claim.Spec.Resources.Requests[api.ResourceName(api.ResourceStorage)]
-	requestedSize := requestedQty.Value()
+	// var selector labels.Selector
+	// if claim.Spec.Selector != nil {
+	// 	internalSelector, err := unversioned.LabelSelectorAsSelector(claim.Spec.Selector)
+	// 	if err != nil {
+	// 		// should be unreachable code due to validation
+	// 		return nil, fmt.Errorf("error creating internal label selector for claim: %v: %v", claimToClaimKey(claim), err)
+	// 	}
+	// 	selector = internalSelector
+	// }
 
-	var selector labels.Selector
-	if claim.Spec.Selector != nil {
-		internalSelector, err := unversioned.LabelSelectorAsSelector(claim.Spec.Selector)
-		if err != nil {
-			// should be unreachable code due to validation
-			return nil, fmt.Errorf("error creating internal label selector for claim: %v: %v", claimToClaimKey(claim), err)
-		}
-		selector = internalSelector
-	}
+	var (
+		smallestVolume     *api.PersistentVolume
+		smallestVolumeSize int64
+
+		requestedQty  = claim.Spec.Resources.Requests[api.ResourceName(api.ResourceStorage)]
+		requestedSize = requestedQty.Value()
+	)
 
 	for _, modes := range allPossibleModes {
 		volumes, err := pvIndex.listByAccessModes(modes)
@@ -111,13 +114,13 @@ func (pvIndex *persistentVolumeOrderedIndex) findByClaim(claim *api.PersistentVo
 				return volume, nil
 			}
 
-			// filter out volumes whose labels don't match the claim's
-			// selector, if specified
-			if volume.Spec.ClaimRef == nil {
-				if selector != nil && !selector.Matches(labels.Set(volume.Labels)) {
-					continue
-				}
-			}
+			// // filter out volumes whose labels don't match the claim's
+			// // selector, if specified
+			// if volume.Spec.ClaimRef == nil {
+			// 	if selector != nil && !selector.Matches(labels.Set(volume.Labels)) {
+			// 		continue
+			// 	}
+			// }
 
 			volumeQty := volume.Spec.Capacity[api.ResourceStorage]
 			volumeSize := volumeQty.Value()

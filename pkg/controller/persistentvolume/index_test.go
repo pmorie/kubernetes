@@ -558,26 +558,26 @@ func createTestVolumes() []*api.PersistentVolume {
 				},
 			},
 		},
-		{
-			ObjectMeta: api.ObjectMeta{
-				UID:  "gce-pd-2",
-				Name: "gce0022",
-				Labels: map[string]string{
-					"should-exist": "true",
-				},
-			},
-			Spec: api.PersistentVolumeSpec{
-				Capacity: api.ResourceList{
-					api.ResourceName(api.ResourceStorage): resource.MustParse("10000G"),
-				},
-				PersistentVolumeSource: api.PersistentVolumeSource{
-					GCEPersistentDisk: &api.GCEPersistentDiskVolumeSource{},
-				},
-				AccessModes: []api.PersistentVolumeAccessMode{
-					api.ReadWriteOnce,
-				},
-			},
-		},
+		// {
+		// 	ObjectMeta: api.ObjectMeta{
+		// 		UID:  "gce-pd-2",
+		// 		Name: "gce0022",
+		// 		Labels: map[string]string{
+		// 			"should-exist": "true",
+		// 		},
+		// 	},
+		// 	Spec: api.PersistentVolumeSpec{
+		// 		Capacity: api.ResourceList{
+		// 			api.ResourceName(api.ResourceStorage): resource.MustParse("10000G"),
+		// 		},
+		// 		PersistentVolumeSource: api.PersistentVolumeSource{
+		// 			GCEPersistentDisk: &api.GCEPersistentDiskVolumeSource{},
+		// 		},
+		// 		AccessModes: []api.PersistentVolumeAccessMode{
+		// 			api.ReadWriteOnce,
+		// 		},
+		// 	},
+		// },
 	}
 }
 
