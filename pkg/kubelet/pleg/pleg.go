@@ -45,8 +45,14 @@ type PodLifecycleEvent struct {
 	Data interface{}
 }
 
+// PodLifecycleEventGenerator (often referred to as PLEG) runs an asynchronous
+// loop that watches for changes to pod state and writes events about those
+// changes to a channel.
 type PodLifecycleEventGenerator interface {
+	// Start starts the asynchronous loop that monitors pod state.
 	Start()
+	// Watch returns a channel for consuming events from the PLEG.
 	Watch() chan *PodLifecycleEvent
+	// Healthy returns whether the PLEG is healthy or an error.
 	Healthy() (bool, error)
 }

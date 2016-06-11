@@ -163,6 +163,7 @@ func generateEvent(podID types.UID, cid string, oldState, newState plegContainer
 	}
 }
 
+// getRelistTime atomically gets the PLEG's relist time.
 func (g *GenericPLEG) getRelistTime() time.Time {
 	val := g.relistTime.Load()
 	if val == nil {
@@ -171,7 +172,8 @@ func (g *GenericPLEG) getRelistTime() time.Time {
 	return val.(time.Time)
 }
 
-func (g *GenericPLEG) updateRelisTime(timestamp time.Time) {
+// updateRelistTime atomically updates the PLEG's relist time.
+func (g *GenericPLEG) updateRelistTime(timestamp time.Time) {
 	g.relistTime.Store(timestamp)
 }
 
@@ -186,7 +188,7 @@ func (g *GenericPLEG) relist() {
 
 	timestamp := g.clock.Now()
 	// Update the relist time.
-	g.updateRelisTime(timestamp)
+	g.updateRelistTime(timestamp)
 	defer func() {
 		metrics.PLEGRelistLatency.Observe(metrics.SinceInMicroseconds(timestamp))
 	}()
@@ -229,8 +231,8 @@ func (g *GenericPLEG) relist() {
 			// associated podRecord of the pod, so that the change will be
 			// detect again in the next relist.
 			// TODO: If many pods changed during the same relist period,
-			// inspecting the pod and getting the PodStatus to update the cache
-			// serially may take a while. We should be aware of this and
+			// inspecting the pod and getting the PodStatus to update the
+			// cache serially may take a while. We should be aware of this and
 			// parallelize if needed.
 			if err := g.updateCache(pod, pid); err != nil {
 				glog.Errorf("PLEG: Ignoring events for pod %s/%s: %v", pod.Name, pod.Namespace, err)
@@ -240,8 +242,9 @@ func (g *GenericPLEG) relist() {
 
 				continue
 			} else if _, found := g.podsToReinspect[pid]; found {
-				// this pod was in the list to reinspect and we did so because it had events, so remove it
-				// from the list (we don't want the reinspection code below to inspect it a second time in
+				// this pod was in the list to reinspect and we did so because
+				// it had events, so remove it from the list (we don't want
+				// the reinspection code below to inspect it a second time in
 				// this relist execution)
 				delete(g.podsToReinspect, pid)
 			}
@@ -274,7 +277,8 @@ func (g *GenericPLEG) relist() {
 		g.cache.UpdateTime(timestamp)
 	}
 
-	// make sure we retain the list of pods that need reinspecting the next time relist is called
+	// make sure we retain the list of pods that need reinspecting the next
+	// time relist is called
 	g.podsToReinspect = needsReinspection
 }
 
@@ -309,10 +313,13 @@ func computeEvent(oldPod, newPod *kubecontainer.Pod, cid *kubecontainer.Containe
 	return generateEvent(pid, cid.ID, oldState, newState)
 }
 
+// cacheEnabled returns whether the PLEG cache is enabled.
 func (g *GenericPLEG) cacheEnabled() bool {
 	return g.cache != nil
 }
 
+// updateCache updates the pod with the given UID in the PLEG cache or deletes
+// it the given pod is nil.
 func (g *GenericPLEG) updateCache(pod *kubecontainer.Pod, pid types.UID) error {
 	if pod == nil {
 		// The pod is missing in the current relist. This means that
@@ -331,6 +338,8 @@ func (g *GenericPLEG) updateCache(pod *kubecontainer.Pod, pid types.UID) error {
 	return err
 }
 
+// updateEvents appends the given event to the list of events for the
+// referenced pod.
 func updateEvents(eventsByPodID map[types.UID][]*PodLifecycleEvent, e *PodLifecycleEvent) {
 	if e == nil {
 		return
@@ -338,6 +347,8 @@ func updateEvents(eventsByPodID map[types.UID][]*PodLifecycleEvent, e *PodLifecy
 	eventsByPodID[e.ID] = append(eventsByPodID[e.ID], e)
 }
 
+// getContainerState gets the current state of the given container ID for the
+// given pod.
 func getContainerState(pod *kubecontainer.Pod, cid *kubecontainer.ContainerID) plegContainerState {
 	// Default to the non-existent state.
 	state := plegContainerNonExistent
@@ -351,6 +362,7 @@ func getContainerState(pod *kubecontainer.Pod, cid *kubecontainer.ContainerID) p
 	return convertState(container.State)
 }
 
+// getOld returns the
 func (pr podRecords) getOld(id types.UID) *kubecontainer.Pod {
 	r, ok := pr[id]
 	if !ok {
