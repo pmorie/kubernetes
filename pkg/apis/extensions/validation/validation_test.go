@@ -1950,7 +1950,7 @@ func TestValidateStorageClass(t *testing.T) {
 			ProvisionerParameters: map[string]string{
 				"kubernetes.io/foo-parameter": "free/form/string",
 				"foo-parameter":               "free-form-string",
-				"foo-parameter2":              "{\"embeded\": \"json\", \"with\": {\"structures\":\"inside\"}}",
+				"foo-parameter2":              "{\"embedded\": \"json\", \"with\": {\"structures\":\"inside\"}}",
 			},
 		},
 	}

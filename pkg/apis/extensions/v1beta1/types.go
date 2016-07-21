@@ -1219,17 +1219,6 @@ type StorageClass struct {
 	ProvisionerParameters map[string]string `json:"provisionerParameters,omitempty" protobuf:"bytes,3,rep,name=provisionerParameters"`
 }
 
-// ProvisionerType describes the type of a provisioner.
-
-// List of provisioners for StorageClass.ProvisionerType that are compiled into
-// Kubernetes. Note that StorageClass.ProvisionerType is a free form string and
-// it is not limited to values listed here.
-const (
-	ProvisionerTypeAWSEBS string = "kubernetes.io/aws-ebs"
-	ProvisionerTypeGCEPD  string = "kubernetes.io/gce-pd"
-	ProvisionerTypeCinder string = "kubernetes.io/cinder"
-)
-
 // StorageClassList is a collection of storage classes.
 type StorageClassList struct {
 	unversioned.TypeMeta `json:",inline"`

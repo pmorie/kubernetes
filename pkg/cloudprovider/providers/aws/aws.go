@@ -209,10 +209,15 @@ type EC2Metadata interface {
 	GetMetadata(path string) (string, error)
 }
 
+// AWS volume types
 const (
+	// Provisioned IOPS SSD
 	VolumeTypeIO1 = "io1"
+	// General Purpose SSD
 	VolumeTypeGP2 = "gp2"
+	// Cold HDD (sc1)
 	VolumeTypeSC1 = "sc1"
+	// Throughput Optimized HDD
 	VolumeTypeST1 = "st1"
 )
 
