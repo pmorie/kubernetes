@@ -36,7 +36,7 @@ import (
 )
 
 const (
-	// emptyUniquePodName is a UniquePodName for empty string.
+	// emptyUniquePodName is a UniquePodName for the empty string.
 	emptyUniquePodName types.UniquePodName = types.UniquePodName("")
 )
 
@@ -92,6 +92,7 @@ func (grm *nestedPendingOperations) Run(
 	grm.lock.Lock()
 	defer grm.lock.Unlock()
 
+	// search for an existing operation
 	var previousOp operation
 	opExists := false
 	previousOpIndex := -1
@@ -141,6 +142,7 @@ func (grm *nestedPendingOperations) Run(
 			})
 	}
 
+	// run the operation in a goroutine
 	go func() (err error) {
 		// Handle unhandled panics (very unlikely)
 		defer k8sRuntime.HandleCrash()

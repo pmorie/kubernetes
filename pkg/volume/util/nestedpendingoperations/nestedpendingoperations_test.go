@@ -264,31 +264,6 @@ func Test_NewGoRoutineMap_Negative_SecondOpBeforeFirstCompletes(t *testing.T) {
 	}
 }
 
-func Test_NewGoRoutineMap_Negative_SecondSubOpBeforeFirstCompletes2(t *testing.T) {
-	// Arrange
-	grm := NewNestedPendingOperations(false /* exponentialBackOffOnError */)
-	volumeName := api.UniqueVolumeName("volume-name")
-	operationPodName := types.UniquePodName("operation-podname")
-	operation1DoneCh := make(chan interface{}, 0 /* bufferSize */)
-	operation1 := generateWaitFunc(operation1DoneCh)
-	err1 := grm.Run(volumeName, operationPodName, operation1)
-	if err1 != nil {
-		t.Fatalf("NewGoRoutine failed. Expected: <no error> Actual: <%v>", err1)
-	}
-	operation2 := generateNoopFunc()
-
-	// Act
-	err2 := grm.Run(volumeName, operationPodName, operation2)
-
-	// Assert
-	if err2 == nil {
-		t.Fatalf("NewGoRoutine did not fail. Expected: <Failed to create operation with name \"%s\". An operation with that name already exists.> Actual: <no error>", volumeName)
-	}
-	if !IsAlreadyExists(err2) {
-		t.Fatalf("NewGoRoutine did not return alreadyExistsError, got: %v", err2)
-	}
-}
-
 func Test_NewGoRoutineMap_Negative_SecondSubOpBeforeFirstCompletes(t *testing.T) {
 	// Arrange
 	grm := NewNestedPendingOperations(false /* exponentialBackOffOnError */)
@@ -427,7 +402,7 @@ func Test_NewGoRoutineMap_Positive_ThirdOpAfterFirstCompletesWithExpBackoff(t *t
 }
 
 func Test_NewGoRoutineMap_Positive_WaitEmpty(t *testing.T) {
-	// Test than Wait() on empty GoRoutineMap always succeeds without blocking
+	// Test that Wait() on empty GoRoutineMap always succeeds without blocking
 	// Arrange
 	grm := NewNestedPendingOperations(false /* exponentialBackOffOnError */)
 
@@ -446,7 +421,7 @@ func Test_NewGoRoutineMap_Positive_WaitEmpty(t *testing.T) {
 }
 
 func Test_NewGoRoutineMap_Positive_WaitEmptyWithExpBackoff(t *testing.T) {
-	// Test than Wait() on empty GoRoutineMap always succeeds without blocking
+	// Test that Wait() on empty GoRoutineMap always succeeds without blocking
 	// Arrange
 	grm := NewNestedPendingOperations(true /* exponentialBackOffOnError */)
 
