@@ -14,11 +14,11 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package unversioned
+package v1beta1
 
 import (
 	api "k8s.io/kubernetes/pkg/api"
-	extensions "k8s.io/kubernetes/pkg/apis/extensions"
+	v1beta1 "k8s.io/kubernetes/pkg/apis/extensions/v1beta1"
 	watch "k8s.io/kubernetes/pkg/watch"
 )
 
@@ -30,12 +30,12 @@ type StorageClassesGetter interface {
 
 // StorageClassInterface has methods to work with StorageClass resources.
 type StorageClassInterface interface {
-	Create(*extensions.StorageClass) (*extensions.StorageClass, error)
-	Update(*extensions.StorageClass) (*extensions.StorageClass, error)
+	Create(*v1beta1.StorageClass) (*v1beta1.StorageClass, error)
+	Update(*v1beta1.StorageClass) (*v1beta1.StorageClass, error)
 	Delete(name string, options *api.DeleteOptions) error
 	DeleteCollection(options *api.DeleteOptions, listOptions api.ListOptions) error
-	Get(name string) (*extensions.StorageClass, error)
-	List(opts api.ListOptions) (*extensions.StorageClassList, error)
+	Get(name string) (*v1beta1.StorageClass, error)
+	List(opts api.ListOptions) (*v1beta1.StorageClassList, error)
 	Watch(opts api.ListOptions) (watch.Interface, error)
 	StorageClassExpansion
 }
@@ -53,8 +53,8 @@ func newStorageClasses(c *ExtensionsClient) *storageClasses {
 }
 
 // Create takes the representation of a storageClass and creates it.  Returns the server's representation of the storageClass, and an error, if there is any.
-func (c *storageClasses) Create(storageClass *extensions.StorageClass) (result *extensions.StorageClass, err error) {
-	result = &extensions.StorageClass{}
+func (c *storageClasses) Create(storageClass *v1beta1.StorageClass) (result *v1beta1.StorageClass, err error) {
+	result = &v1beta1.StorageClass{}
 	err = c.client.Post().
 		Resource("storageclasses").
 		Body(storageClass).
@@ -64,8 +64,8 @@ func (c *storageClasses) Create(storageClass *extensions.StorageClass) (result *
 }
 
 // Update takes the representation of a storageClass and updates it. Returns the server's representation of the storageClass, and an error, if there is any.
-func (c *storageClasses) Update(storageClass *extensions.StorageClass) (result *extensions.StorageClass, err error) {
-	result = &extensions.StorageClass{}
+func (c *storageClasses) Update(storageClass *v1beta1.StorageClass) (result *v1beta1.StorageClass, err error) {
+	result = &v1beta1.StorageClass{}
 	err = c.client.Put().
 		Resource("storageclasses").
 		Name(storageClass.Name).
@@ -96,8 +96,8 @@ func (c *storageClasses) DeleteCollection(options *api.DeleteOptions, listOption
 }
 
 // Get takes name of the storageClass, and returns the corresponding storageClass object, and an error if there is any.
-func (c *storageClasses) Get(name string) (result *extensions.StorageClass, err error) {
-	result = &extensions.StorageClass{}
+func (c *storageClasses) Get(name string) (result *v1beta1.StorageClass, err error) {
+	result = &v1beta1.StorageClass{}
 	err = c.client.Get().
 		Resource("storageclasses").
 		Name(name).
@@ -107,8 +107,8 @@ func (c *storageClasses) Get(name string) (result *extensions.StorageClass, err 
 }
 
 // List takes label and field selectors, and returns the list of StorageClasses that match those selectors.
-func (c *storageClasses) List(opts api.ListOptions) (result *extensions.StorageClassList, err error) {
-	result = &extensions.StorageClassList{}
+func (c *storageClasses) List(opts api.ListOptions) (result *v1beta1.StorageClassList, err error) {
+	result = &v1beta1.StorageClassList{}
 	err = c.client.Get().
 		Resource("storageclasses").
 		VersionedParams(&opts, api.ParameterCodec).
