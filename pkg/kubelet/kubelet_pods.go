@@ -14,10 +14,37 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+package kubelet
+
 import (
+	"bytes"
+	"fmt"
+	"io"
+	"io/ioutil"
+	"net/http"
+	"os"
+	"path"
+	"path/filepath"
+	"sort"
 	"strings"
 
+	"github.com/golang/glog"
 	"k8s.io/kubernetes/pkg/api"
+	utilpod "k8s.io/kubernetes/pkg/api/pod"
+	"k8s.io/kubernetes/pkg/api/unversioned"
+	"k8s.io/kubernetes/pkg/fieldpath"
+	kubecontainer "k8s.io/kubernetes/pkg/kubelet/container"
+	"k8s.io/kubernetes/pkg/kubelet/envvars"
+	"k8s.io/kubernetes/pkg/kubelet/images"
+	"k8s.io/kubernetes/pkg/kubelet/status"
+	"k8s.io/kubernetes/pkg/kubelet/util/format"
+	"k8s.io/kubernetes/pkg/kubelet/util/ioutils"
+	"k8s.io/kubernetes/pkg/types"
+	"k8s.io/kubernetes/pkg/util/sets"
+	"k8s.io/kubernetes/pkg/util/term"
+	utilvalidation "k8s.io/kubernetes/pkg/util/validation"
+	"k8s.io/kubernetes/pkg/volume/util/volumehelper"
+	"k8s.io/kubernetes/third_party/forked/golang/expansion"
 )
 
 // Get a list of pods that have data directories.
@@ -1092,4 +1119,25 @@ func (kl *Kubelet) PortForward(podFullName string, podUID types.UID, port uint16
 		return fmt.Errorf("pod not found (%q)", podFullName)
 	}
 	return kl.runner.PortForward(&pod, port, stream)
+}
+
+// getPullSecretsForPod inspects the Pod and retrieves the referenced pull
+// secrets.
+// TODO: duplicate secrets are being retrieved multiple times and there
+// is no cache.  Creating and using a secret manager interface will make this
+// easier to address.
+func (kl *Kubelet) getPullSecretsForPod(pod *api.Pod) ([]api.Secret, error) {
+	pullSecrets := []api.Secret{}
+
+	for _, secretRef := range pod.Spec.ImagePullSecrets {
+		secret, err := kl.kubeClient.Core().Secrets(pod.Namespace).Get(secretRef.Name)
+		if err != nil {
+			glog.Warningf("Unable to retrieve pull secret %s/%s for %s/%s due to %v.  The image pull may not succeed.", pod.Namespace, secretRef.Name, pod.Namespace, pod.Name, err)
+			continue
+		}
+
+		pullSecrets = append(pullSecrets, *secret)
+	}
+
+	return pullSecrets, nil
 }
