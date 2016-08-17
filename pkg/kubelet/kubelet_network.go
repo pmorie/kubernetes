@@ -303,3 +303,24 @@ func (kl *Kubelet) shapingEnabled() bool {
 	}
 	return true
 }
+
+// returns whether the pod uses the host network namespace.
+func podUsesHostNetwork(pod *api.Pod) bool {
+	return pod.Spec.SecurityContext != nil && pod.Spec.SecurityContext.HostNetwork
+}
+
+// hasHostPortConflicts detects pods with conflicted host ports.
+func hasHostPortConflicts(pods []*api.Pod) bool {
+	ports := sets.String{}
+	for _, pod := range pods {
+		if errs := validation.AccumulateUniqueHostPorts(pod.Spec.Containers, &ports, field.NewPath("spec", "containers")); len(errs) > 0 {
+			glog.Errorf("Pod %q: HostPort is already allocated, ignoring: %v", format.Pod(pod), errs)
+			return true
+		}
+		if errs := validation.AccumulateUniqueHostPorts(pod.Spec.InitContainers, &ports, field.NewPath("spec", "initContainers")); len(errs) > 0 {
+			glog.Errorf("Pod %q: HostPort is already allocated, ignoring: %v", format.Pod(pod), errs)
+			return true
+		}
+	}
+	return false
+}
