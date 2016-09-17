@@ -1104,11 +1104,15 @@ func (dm *DockerManager) fmtDockerOpts(opts []dockerOpt) ([]string, error) {
 
 func (dm *DockerManager) getSecurityOpts(pod *api.Pod, ctrName string) ([]dockerOpt, error) {
 	var securityOpts []dockerOpt
-	if seccompOpts, err := dm.getSeccompOpts(pod, ctrName); err != nil {
-		return nil, err
-	} else {
-		securityOpts = append(securityOpts, seccompOpts...)
-	}
+	// TODO: there is a bug in docker which interferes with the security
+	// option sharing amongst containers sharing an IPC namespace. commenting
+	// this out temporarily to make progress on SELinux issue.
+
+	// if seccompOpts, err := dm.getSeccompOpts(pod, ctrName); err != nil {
+	// 	return nil, err
+	// } else {
+	// 	securityOpts = append(securityOpts, seccompOpts...)
+	// }
 
 	if appArmorOpts, err := dm.getAppArmorOpts(pod, ctrName); err != nil {
 		return nil, err
