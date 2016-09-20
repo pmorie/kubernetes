@@ -67,7 +67,7 @@ func TestMain(m *testing.M) {
 	os.Exit(m.Run())
 }
 
-func TestE2eNode(t *testing.T) {
+func TestNodeE2Es(t *testing.T) {
 	if *runServicesMode {
 		// If run-services-mode is specified, only run services in current process.
 		services.RunE2EServices()
@@ -89,7 +89,7 @@ func TestE2eNode(t *testing.T) {
 			reporters = append(reporters, more_reporters.NewJUnitReporter(junitPath))
 		}
 	}
-	RunSpecsWithDefaultAndCustomReporters(t, "E2eNode Suite", reporters)
+	RunSpecsWithDefaultAndCustomReporters(t, "Node E2E Suite", reporters)
 }
 
 // Setup the kubelet on the node
