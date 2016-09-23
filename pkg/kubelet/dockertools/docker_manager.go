@@ -645,7 +645,7 @@ func (dm *DockerManager) runContainer(
 			glog.Errorf("Error on creating termination-log file %q: %v", containerLogPath, err)
 		} else {
 			fs.Close() // Close immediately; we're just doing a `touch` here
-			b := fmt.Sprintf("%s:%s", containerLogPath, container.TerminationMessagePath)
+			b := fmt.Sprintf("%s:%s:Z", containerLogPath, container.TerminationMessagePath)
 			binds = append(binds, b)
 		}
 	}

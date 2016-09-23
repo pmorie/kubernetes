@@ -99,13 +99,15 @@ func (plugin *emptyDirPlugin) newMounterInternal(spec *volume.Spec, pod *api.Pod
 		medium = spec.Volume.EmptyDir.Medium
 	}
 	return &emptyDir{
-		pod:             pod,
-		volName:         spec.Name(),
-		medium:          medium,
-		mounter:         mounter,
-		mountDetector:   mountDetector,
-		plugin:          plugin,
-		rootContext:     plugin.host.GetRootContext(),
+		pod:           pod,
+		volName:       spec.Name(),
+		medium:        medium,
+		mounter:       mounter,
+		mountDetector: mountDetector,
+		plugin:        plugin,
+		// TODO: this should still be injected, just hardcoding for now since
+		// the jury is out on the actual mechanism to be used.
+		rootContext:     "system_u:object_r:svirt_sandbox_file_t:s0", /* plugin.host.GetRootContext(), */
 		MetricsProvider: volume.NewMetricsDu(getPath(pod.UID, spec.Name(), plugin.host)),
 	}, nil
 }

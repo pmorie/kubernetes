@@ -31,6 +31,7 @@ artifacts=${ARTIFACTS:-"/tmp/_artifacts"}
 remote=${REMOTE:-"false"}
 run_until_failure=${RUN_UNTIL_FAILURE:-"false"}
 test_args=${TEST_ARGS:-""}
+delete_namespace=${DELETE_NAMESPACE:-"false"}
 
 # Parse the flags to pass to ginkgo
 ginkgoflags=""
@@ -170,7 +171,7 @@ else
   # Provided for backwards compatibility
   echo "Running node e2e tests"
   go run -v test/e2e_node/runner/local/run_local.go --v 3 --ginkgo-flags="$ginkgoflags" \
-    --test-flags="--alsologtostderr --v 4 --report-dir=${report} --node-name $(hostname) \
-    $test_args" --build-dependencies=true
+    --test-flags="--alsologtostderr --v 4 --report-dir=${report} --node-name $(hostname) --delete-namespace=false \
+    $test_args" --build-dependencies=true 
   exit $?
 fi

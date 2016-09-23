@@ -94,6 +94,7 @@ func (kl *Kubelet) relabelVolumes(pod *api.Pod, volumes kubecontainer.VolumeMap)
 		return err
 	}
 
+	// TODO: inject a default context here if there is none specified in the pod spec.
 	rootDirSELinuxOptions.Level = pod.Spec.SecurityContext.SELinuxOptions.Level
 	volumeContext := fmt.Sprintf("%s:%s:%s:%s", rootDirSELinuxOptions.User, rootDirSELinuxOptions.Role, rootDirSELinuxOptions.Type, rootDirSELinuxOptions.Level)
 
