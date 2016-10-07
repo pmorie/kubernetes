@@ -35,6 +35,7 @@ func newService(name string, uid types.UID, serviceType api.ServiceType) *api.Se
 
 func TestCreateExternalLoadBalancer(t *testing.T) {
 	table := []struct {
+		cachedService       *api.Service
 		service             *api.Service
 		expectErr           bool
 		expectCreateAttempt bool
@@ -51,6 +52,55 @@ func TestCreateExternalLoadBalancer(t *testing.T) {
 			},
 			expectErr:           false,
 			expectCreateAttempt: false,
+		},
+		{
+			cachedService: &api.Service{
+				ObjectMeta: api.ObjectMeta{
+					Name:      "no-external-balancer",
+					Namespace: "default",
+				},
+				Spec: api.ServiceSpec{
+					Type: api.ServiceTypeClusterIP,
+				},
+			},
+			service: &api.Service{
+				ObjectMeta: api.ObjectMeta{
+					Name:      "no-external-balancer",
+					Namespace: "default",
+				},
+				Spec: api.ServiceSpec{
+					Type: api.ServiceTypeClusterIP,
+				},
+			},
+			expectErr:           false,
+			expectCreateAttempt: false,
+		},
+		{
+			cachedService: &api.Service{
+				ObjectMeta: api.ObjectMeta{
+					Name:      "udp-service",
+					Namespace: "default",
+				},
+				Spec: api.ServiceSpec{
+					Type: api.ServiceTypeClusterIP,
+				},
+			},
+			service: &api.Service{
+				ObjectMeta: api.ObjectMeta{
+					Name:      "udp-service",
+					Namespace: "default",
+					SelfLink:  testapi.Default.SelfLink("services", "udp-service"),
+				},
+				Spec: api.ServiceSpec{
+					Ports: []api.ServicePort{{
+						Port:     80,
+						Protocol: api.ProtocolUDP,
+					}},
+					Type: api.ServiceTypeLoadBalancer,
+				},
+			},
+			expectErr:           false,
+			expectCreateAttempt: true,
 		},
 		{
 			service: &api.Service{
@@ -90,7 +140,7 @@ func TestCreateExternalLoadBalancer(t *testing.T) {
 		},
 	}
 
-	for _, item := range table {
+	for i, item := range table {
 		cloud := &fakecloud.FakeCloud{}
 		cloud.Region = region
 		client := &fake.Clientset{}
@@ -98,19 +148,29 @@ func TestCreateExternalLoadBalancer(t *testing.T) {
 		controller.init()
 		cloud.Calls = nil     // ignore any cloud calls made in init()
 		client.ClearActions() // ignore any client calls made in init()
-		err, _ := controller.createLoadBalancerIfNeeded("foo/bar", item.service)
+
+		var cached *cachedService = nil
+		if item.cachedService != nil {
+			cached = &cachedService{state: item.cachedService}
+		}
+
+		err, _ := controller.createLoadBalancerIfNeeded("foo/bar", cached, item.service)
 		if !item.expectErr && err != nil {
-			t.Errorf("unexpected error: %v", err)
+			t.Errorf("%v: unexpected error: %v", i, err)
+			continue
 		} else if item.expectErr && err == nil {
-			t.Errorf("expected error creating %v, got nil", item.service)
+			t.Errorf("%v: expected error creating %v, got nil", i, item.service)
+			continue
 		}
 		actions := client.Actions()
 		if !item.expectCreateAttempt {
 			if len(cloud.Calls) > 0 {
-				t.Errorf("unexpected cloud provider calls: %v", cloud.Calls)
+				t.Errorf("%v: unexpected cloud provider calls: %v", i, cloud.Calls)
+				continue
 			}
 			if len(actions) > 0 {
-				t.Errorf("unexpected client actions: %v", actions)
+				t.Errorf("%v: unexpected client actions: %v", i, actions)
+				continue
 			}
 		} else {
 			var balancer *fakecloud.FakeBalancer
@@ -119,16 +179,18 @@ func TestCreateExternalLoadBalancer(t *testing.T) {
 					b := cloud.Balancers[k]
 					balancer = &b
 				} else {
-					t.Errorf("expected one load balancer to be created, got %v", cloud.Balancers)
-					break
+					t.Errorf("%v: expected one load balancer to be created, got %v", i, cloud.Balancers)
+					continue
 				}
 			}
 			if balancer == nil {
-				t.Errorf("expected one load balancer to be created, got none")
+				t.Errorf("%v: expected one load balancer to be created, got none", i)
+				continue
 			} else if balancer.Name != controller.loadBalancerName(item.service) ||
 				balancer.Region != region ||
 				balancer.Ports[0].Port != item.service.Spec.Ports[0].Port {
-				t.Errorf("created load balancer has incorrect parameters: %v", balancer)
+				t.Errorf("%v: created load balancer has incorrect parameters: %v", i, balancer)
+				continue
 			}
 			actionFound := false
 			for _, action := range actions {
@@ -137,7 +199,7 @@ func TestCreateExternalLoadBalancer(t *testing.T) {
 				}
 			}
 			if !actionFound {
-				t.Errorf("expected updated service to be sent to client, got these actions instead: %v", actions)
+				t.Errorf("%v: expected updated service to be sent to client, got these actions instead: %v", i, actions)
 			}
 		}
 	}
