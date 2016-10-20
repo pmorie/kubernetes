@@ -258,10 +258,17 @@ func testVolumeClient(client clientset.Interface, config VolumeTestConfig, volum
 	Expect(err).NotTo(HaveOccurred(), "failed: finding the contents of the mounted file.")
 
 	if fsGroup != nil {
-
 		By("Checking fsGroup is correct.")
 		_, err = framework.LookForStringInPodExec(config.namespace, clientPod.Name, []string{"ls", "-ld", "/opt"}, strconv.Itoa(int(*fsGroup)), time.Minute)
-		Expect(err).NotTo(HaveOccurred(), "failed: getting the right priviliges in the file %v", int(*fsGroup))
+		Expect(err).NotTo(HaveOccurred(), "failed: getting the right privileges in the file %v", int(*fsGroup))
+
+		By("Checking S_ISGID is set on directories.")
+		_, err = framework.LookForStringInPodExec(config.namespace, clientPod.Name, []string{"find", "/opt", "-type", "d", "-exec", "stat", "-c", "'%a'", "{}", "\\;", "|", "grep", "-vE", "'2,[0-7]{3}'", "&&", "echo", "bad", "||", "echo", "ok"}, "ok", time.Minute)
+		Expect(err).NotTo(HaveOccurred(), "failed: checking S_ISGID privileges on directories")
+
+		By("Checking S_ISGID is not set on files.")
+		_, err = framework.LookForStringInPodExec(config.namespace, clientPod.Name, []string{"find", "test", "-type", "f", "-exec", "stat", "-c", "'%a'", "{}", "\\;", "|", "grep", "-E", "'2[0-7]{3}'", "&&", "echo", "bad", "||", "echo", "ok"}, "ok", time.Minute)
+		Expect(err).NotTo(HaveOccurred(), "failed: checking S_ISGID privileges not set on files")
 	}
 }
 
