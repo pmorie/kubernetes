@@ -31,12 +31,18 @@ var _ = framework.KubeDescribe("Secrets", func() {
 	f := framework.NewDefaultFramework("secrets")
 
 	It("should be consumable from pods in volume [Conformance]", func() {
-		doSecretE2EWithoutMapping(f, nil)
+		doSecretE2EWithoutMapping(f, nil, nil)
 	})
 
 	It("should be consumable from pods in volume with defaultMode set [Conformance]", func() {
 		defaultMode := int32(0400)
-		doSecretE2EWithoutMapping(f, &defaultMode)
+		doSecretE2EWithoutMapping(f, &defaultMode, nil)
+	})
+
+	It("should be consumable from pods in volume with defaultMode and fsGroup set [Conformance]", func() {
+		defaultMode := int32(0400)
+		fsGroup := int64(1001)
+		doSecretE2EWithoutMapping(f, &defaultMode, &fsGroup)
 	})
 
 	It("should be consumable from pods in volume with mappings [Conformance]", func() {
@@ -180,7 +186,7 @@ func secretForTest(namespace, name string) *api.Secret {
 	}
 }
 
-func doSecretE2EWithoutMapping(f *framework.Framework, defaultMode *int32) {
+func doSecretE2EWithoutMapping(f *framework.Framework, defaultMode *int32, fsGroup *int64) {
 	var (
 		name            = "secret-test-" + string(uuid.NewUUID())
 		volumeName      = "secret-volume"
@@ -233,6 +239,12 @@ func doSecretE2EWithoutMapping(f *framework.Framework, defaultMode *int32) {
 	} else {
 		mode := int32(0644)
 		defaultMode = &mode
+	}
+
+	if fsGroup != nil {
+		pod.Spec.SecurityContext = &api.PodSecurityContext{
+			FSGroup: fsGroup,
+		}
 	}
 
 	modeString := fmt.Sprintf("%v", os.FileMode(*defaultMode))
