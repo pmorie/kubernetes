@@ -120,6 +120,7 @@ type conversionFuncMap map[conversionPair]*types.Type
 
 // Returns all manually-defined conversion functions in the package.
 func getManualConversionFunctions(context *generator.Context, pkg *types.Package, manualMap conversionFuncMap) {
+	glog.Infof("Getting manual conversion functions for package %v", pkg.Path)
 	scopeName := types.Ref(conversionPackagePath, "Scope").Name
 	errorName := types.Ref("", "error").Name
 	buffer := &bytes.Buffer{}
